@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉利汽车财务报表分析</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --geli-blue: #1B3A8D;
+            --geli-light-blue: #2E4EA1;
+            --geli-accent-blue: #4A6FC1;
+            --geli-bg: #F5F7FA;
+            --card-bg: #ffffff;
+            --shadow-light: rgba(27, 58, 141, 0.08);
+            --shadow-medium: rgba(27, 58, 141, 0.12);
+            --text-primary: #1B3A8D;
+            --text-secondary: #5f6368;
+            --text-tertiary: #7f8c8d;
+            --border-color: rgba(27, 58, 141, 0.1);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --border-radius: 8px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--geli-bg);
+            color: #333;
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        /* 固定16:9主容器 */
+        .dashboard-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9比例 (9/16=0.5625) */
+            position: relative;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        
+        .dashboard-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 25px 30px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 主标题 */
+        .main-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        /* 第一部分：核心财务比率概览 */
+        .core-metrics-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 22px;
+            flex-shrink: 0;
+        }
+        
+        .metrics-block {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 18px;
+            box-shadow: 0 2px 6px var(--shadow-light);
+            border-left: 4px solid var(--geli-blue);
+        }
+        
+        .metrics-block h3 {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .metrics-block h3 i {
+            margin-right: 8px;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .metric-name {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+        
+        .metric-value {
+            font-weight: 700;
+            font-size: 20px;
+        }
+        
+        .metric-status-good { color: var(--success-color); }
+        .metric-status-warning { color: var(--warning-color); }
+        .metric-status-alert { color: var(--danger-color); }
+        
+        /* 第二部分：三大报表分析 */
+        .statement-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 6px var(--shadow-light);
+            margin-bottom: 22px;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        .statement-tabs {
+            display: flex;
+            background: linear-gradient(to right, rgba(27, 58, 141, 0.1), rgba(27, 58, 141, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .statement-tab {
+            flex: 1;
+            padding: 16px 15px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .statement-tab:hover {
+            background-color: rgba(27, 58, 141, 0.08);
+            color: var(--geli-blue);
+        }
+        
+        .statement-tab.active {
+            color: var(--geli-blue);
+            border-bottom: 3px solid var(--geli-blue);
+            background-color: rgba(27, 58, 141, 0.1);
+        }
+        
+        .statement-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .statement-table-container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+        
+        .statement-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 800px;
+        }
+        
+        .statement-table th {
+            text-align: left;
+            padding: 14px 12px;
+            background-color: rgba(27, 58, 141, 0.05);
+            color: var(--text-primary);
+            font-weight: 700;
+            border-bottom: 2px solid rgba(27, 58, 141, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .statement-table td {
+            padding: 12px 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        
+        .statement-table tr:hover {
+            background-color: rgba(27, 58, 141, 0.03);
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .trend-up {
+            color: var(--success-color);
+            font-weight: 700;
+        }
+        
+        .trend-down {
+            color: var(--danger-color);
+            font-weight: 700;
+        }
+        
+        /* 第三部分：关键财务洞察 */
+        .insights-section {
+            flex-shrink: 0;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 2px 6px var(--shadow-light);
+            border-left: 5px solid var(--geli-blue);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .insights-section h3 {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .insights-section h3 i {
+            margin-right: 8px;
+        }
+        
+        .insights-content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .insight-block {
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(27, 58, 141, 0.03), rgba(74, 111, 193, 0.05));
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+        
+        .insight-block h4 {
+            font-size: 15px;
+            color: var(--geli-blue);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .insight-block h4 i {
+            margin-right: 6px;
+        }
+        
+        .insight-block p {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+        
+        /* 页脚 */
+        .footer {
+            flex-shrink: 0;
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        
+        /* 自定义滚动条 */
+        .statement-table-container::-webkit-scrollbar,
+        .insights-section::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .statement-table-container::-webkit-scrollbar-track,
+        .insights-section::-webkit-scrollbar-track {
+            background: rgba(27, 58, 141, 0.05);
+            border-radius: 3px;
+        }
+        
+        .statement-table-container::-webkit-scrollbar-thumb,
+        .insights-section::-webkit-scrollbar-thumb {
+            background: rgba(27, 58, 141, 0.2);
+            border-radius: 3px;
+        }
+        
+        .statement-table-container::-webkit-scrollbar-thumb:hover,
+        .insights-section::-webkit-scrollbar-thumb:hover {
+            background: rgba(27, 58, 141, 0.4);
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1300px) {
+            .dashboard-container {
+                max-width: 1000px;
+            }
+            
+            .statement-tab {
+                font-size: 14px;
+                padding: 14px 10px;
+            }
+        }
+        
+        @media (max-width: 1100px) {
+            .core-metrics-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .insights-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .dashboard-container {
+                border-radius: 8px;
+            }
+            
+            .dashboard-content {
+                padding: 20px;
+            }
+            
+            .core-metrics-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .statement-tabs {
+                flex-direction: column;
+            }
+            
+            .statement-tab {
+                text-align: left;
+                padding: 12px 15px;
+                border-bottom: 1px solid var(--border-color);
+                border-left: 3px solid transparent;
+            }
+            
+            .statement-tab.active {
+                border-left: 3px solid var(--geli-blue);
+                border-bottom: 1px solid var(--border-color);
+                border-bottom-width: 3px;
+            }
+            
+            .insights-section {
+                max-height: 250px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 10px;
+            }
+            
+            .dashboard-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 固定16:9比例主容器 -->
+    <div class="dashboard-container">
+        <div class="dashboard-content">
+            <!-- 主标题 -->
+            <h1 class="main-title">吉利汽车财务报表分析 -2025上半年</h1>
+            
+            <!-- 第一部分：核心财务比率概览 -->
+            <section class="core-metrics-section">
+                <div class="metrics-block">
+                    <h3><i class="fas fa-balance-scale"></i> 资产负债表分析</h3>
+                    <div class="metric-row">
+                        <span class="metric-name">总资产报酬率</span>
+                        <span class="metric-value metric-status-warning">3.69%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">净资产报酬率</span>
+                        <span class="metric-value metric-status-warning">10.55%</span>
+                    </div>
+                </div>
+                
+                <div class="metrics-block">
+                    <h3><i class="fas fa-chart-line"></i> 利润表分析</h3>
+                    <div class="metric-row">
+                        <span class="metric-name">总资产报酬率</span>
+                        <span class="metric-value metric-status-warning">3.69%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">资产负债率</span>
+                        <span class="metric-value metric-status-alert">66.40%</span>
+                    </div>
+                </div>
+                
+                <div class="metrics-block">
+                    <h3><i class="fas fa-exchange-alt"></i> 现金流量表分析</h3>
+                    <div class="metric-row">
+                        <span class="metric-name">流动比率</span>
+                        <span class="metric-value metric-status-alert">0.95</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">现金比率</span>
+                        <span class="metric-value metric-status-warning">0.33</span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 第二部分：三大报表分析 -->
+            <section class="statement-section">
+                <div class="statement-tabs">
+                    <div class="statement-tab active" data-tab="balance">资产负债表负债与权益变化对比分析</div>
+                    <div class="statement-tab" data-tab="income">利润表变化对比分析</div>
+                    <div class="statement-tab" data-tab="cashflow">现金流量表变化对比分析</div>
+            </div>
+            
+            <div class="statement-content">
+                <!-- 资产负债表 -->
+                <div class="statement-table-container" id="balance-sheet-content">
+                    <table class="statement-table">
+                        <thead>
+                            <tr>
+                                <th>科目</th>
+                                <th>2025-06-30 (期末)</th>
+                                <th>2024-12-31 (期初)</th>
+                                <th>变动金额</th>
+                                <th>变动比例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="5" style="background-color:rgba(27,58,141,0.05); font-weight:700; padding:10px 12px;">资产</td></tr>
+                            <tr><td style="padding-left:20px;">流动资产</td><td class="text-right">1,538亿</td><td class="text-right">1,521亿</td><td class="text-right"><span class="trend-up">+17.0亿</span></td><td class="text-right">+1.12%</td></tr>
+                            <tr><td style="padding-left:40px;">现金及短期投资</td><td class="text-right">531.9亿</td><td class="text-right">430.6亿</td><td class="text-right"><span class="trend-up">+101.3亿</span></td><td class="text-right">+23.53%</td></tr>
+                            <tr><td style="padding-left:40px;">贸易应收款项</td><td class="text-right">187.5亿</td><td class="text-right">191.8亿</td><td class="text-right"><span class="trend-down">-4.3亿</span></td><td class="text-right">-2.24%</td></tr>
+                            <tr><td style="padding-left:40px;">存货</td><td class="text-right">269.0亿</td><td class="text-right">293.6亿</td><td class="text-right"><span class="trend-down">-24.6亿</span></td><td class="text-right">-8.38%</td></tr>
+                            <tr><td style="padding-left:20px;">非流动资产</td><td class="text-right">1,203亿</td><td class="text-right">1,189亿</td><td class="text-right"><span class="trend-up">+14.0亿</span></td><td class="text-right">+1.18%</td></tr>
+                            <tr><td style="padding-left:40px;">物业、厂房及设备</td><td class="text-right">346.1亿</td><td class="text-right">348.5亿</td><td class="text-right"><span class="trend-down">-2.4亿</span></td><td class="text-right">-0.69%</td></tr>
+                            <tr><td style="padding-left:40px;">无形资产</td><td class="text-right">358.2亿</td><td class="text-right">356.3亿</td><td class="text-right"><span class="trend-up">+1.9亿</span></td><td class="text-right">+0.53%</td></tr>
+                            <tr><td style="padding-left:40px;">于联营/合营公司权益</td><td class="text-right">314.8亿</td><td class="text-right">287.9亿</td><td class="text-right"><span class="trend-up">+26.9亿</span></td><td class="text-right">+9.34%</td></tr>
+                            <tr><td><strong>资产合计</strong></td><td class="text-right"><strong>2,741亿</strong></td><td class="text-right"><strong>2,711亿</strong></td><td class="text-right"><strong><span class="trend-up">+30.0亿</span></strong></td><td class="text-right"><strong>+1.11%</strong></td></tr>
+                            
+                            <tr><td colspan="5" style="background-color:rgba(27,58,141,0.05); font-weight:700; padding:10px 12px;">负债与权益</td></tr>
+                            <tr><td style="padding-left:20px;">流动负债</td><td class="text-right">1,622亿</td><td class="text-right">1,629亿</td><td class="text-right"><span class="trend-down">-7.0亿</span></td><td class="text-right">-0.43%</td></tr>
+                            <tr><td style="padding-left:40px;">贸易应付款项</td><td class="text-right">770.7亿</td><td class="text-right">862.7亿</td><td class="text-right"><span class="trend-down">-92.0亿</span></td><td class="text-right">-10.66%</td></tr>
+                            <tr><td style="padding-left:40px;">银行借款</td><td class="text-right">91.29亿</td><td class="text-right">13.58亿</td><td class="text-right"><span class="trend-up">+77.71亿</span></td><td class="text-right">+572.24%</td></tr>
+                            <tr><td style="padding-left:20px;">非流动负债</td><td class="text-right">199.0亿</td><td class="text-right">188.8亿</td><td class="text-right"><span class="trend-up">+10.2亿</span></td><td class="text-right">+5.40%</td></tr>
+                            <tr><td><strong>负债合计</strong></td><td class="text-right"><strong>1,821亿</strong></td><td class="text-right"><strong>1,818亿</strong></td><td class="text-right"><strong><span class="trend-up">+3.0亿</span></strong></td><td class="text-right"><strong>+0.17%</strong></td></tr>
+                            <tr><td><strong>股东权益合计</strong></td><td class="text-right"><strong>920.0亿</strong></td><td class="text-right"><strong>893.0亿</strong></td><td class="text-right"><strong><span class="trend-up">+27.0亿</span></strong></td><td class="text-right"><strong>+3.02%</strong></td></tr>
+                            <tr><td><strong>负债与股东权益合计</strong></td><td class="text-right"><strong>2,741亿</strong></td><td class="text-right"><strong>2,711亿</strong></td><td class="text-right"><strong><span class="trend-up">+30.0亿</span></strong></td><td class="text-right"><strong>+1.11%</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 利润表 (初始隐藏) -->
+                <div class="statement-table-container" id="income-statement-content" style="display:none;">
+                    <table class="statement-table">
+                        <thead>
+                            <tr>
+                                <th>科目</th>
+                                <th>2025年1-6月</th>
+                                <th>2024年1-6月</th>
+                                <th>变动金额</th>
+                                <th>变动比例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>营业总收入</strong></td><td class="text-right"><strong>1,503亿</strong></td><td class="text-right"><strong>1,188亿</strong></td><td class="text-right"><strong><span class="trend-up">+315亿</span></strong></td><td class="text-right"><strong>+26.51%</strong></td></tr>
+                            <tr><td style="padding-left:20px;">减：营业成本</td><td class="text-right">1,256亿</td><td class="text-right">990.1亿</td><td class="text-right"><span class="trend-up">+265.9亿</span></td><td class="text-right">+26.86%</td></tr>
+                            <tr><td><strong>毛利润</strong></td><td class="text-right"><strong>247.2亿</strong></td><td class="text-right"><strong>198.7亿</strong></td><td class="text-right"><strong><span class="trend-up">+48.5亿</span></strong></td><td class="text-right"><strong>+24.41%</strong></td></tr>
+                            <tr><td style="padding-left:20px;">减：期间费用</td><td class="text-right">186.1亿</td><td class="text-right">135.5亿</td><td class="text-right"><span class="trend-up">+50.6亿</span></td><td class="text-right">+37.34%</td></tr>
+                            <tr><td style="padding-left:40px;">其中：研发费用</td><td class="text-right">73.28亿</td><td class="text-right">60.58亿</td><td class="text-right"><span class="trend-up">+12.70亿</span></td><td class="text-right">+20.96%</td></tr>
+                            <tr><td><strong>营业利润</strong></td><td class="text-right"><strong>112.9亿</strong></td><td class="text-right"><strong>94.34亿</strong></td><td class="text-right"><strong><span class="trend-up">+18.56亿</span></strong></td><td class="text-right"><strong>+19.67%</strong></td></tr>
+                            <tr><td><strong>利润总额</strong></td><td class="text-right"><strong>112.9亿</strong></td><td class="text-right"><strong>112.8亿</strong></td><td class="text-right"><span class="trend-up">+0.1亿</span></td><td class="text-right">+0.09%</td></tr>
+                            <tr><td style="padding-left:20px;">减：所得税费用</td><td class="text-right">18.35亿</td><td class="text-right">4.894亿</td><td class="text-right"><span class="trend-up">+13.456亿</span></td><td class="text-right">+274.88%</td></tr>
+                            <tr><td><strong>净利润</strong></td><td class="text-right"><strong>94.50亿</strong></td><td class="text-right"><strong>107.9亿</strong></td><td class="text-right"><strong><span class="trend-down">-13.40亿</span></strong></td><td class="text-right"><strong>-12.42%</strong></td></tr>
+                            <tr><td style="padding-left:20px;">其中：归母净利润</td><td class="text-right">92.90亿</td><td class="text-right">107.9亿</td><td class="text-right"><span class="trend-down">-15.00亿</span></td><td class="text-right">-13.90%</td></tr>
+                            <tr><td><strong>核心财务比率</strong></td><td colspan="4" style="background-color:rgba(27,58,141,0.05); font-weight:700; padding:10px 12px;"></td></tr>
+                            <tr><td style="padding-left:20px;">毛利率</td><td class="text-right">16.45%</td><td class="text-right">15.12%</td><td class="text-right"><span class="trend-up">+1.33pp</span></td><td class="text-right">盈利能力提升</td></tr>
+                            <tr><td style="padding-left:20px;">净利率</td><td class="text-right">6.29%</td><td class="text-right">9.68%</td><td class="text-right"><span class="trend-down">-3.39pp</span></td><td class="text-right">盈利质量下降</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 现金流量表 (初始隐藏) -->
+                <div class="statement-table-container" id="cashflow-statement-content" style="display:none;">
+                    <table class="statement-table">
+                        <thead>
+                            <tr>
+                                <th>科目</th>
+                                <th>2025年1-6月</th>
+                                <th>2024年1-6月</th>
+                                <th>变动金额</th>
+                                <th>变动说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="5" style="background-color:rgba(27,58,141,0.05); font-weight:700; padding:10px 12px;">经营活动现金流量</td></tr>
+                            <tr><td><strong>经营活动现金流入小计</strong></td><td class="text-right"><strong>1,576亿</strong></td><td class="text-right"><strong>1,258亿</strong></td><td class="text-right"><strong><span class="trend-up">+318亿</span></strong></td><td class="text-right">随收入增长</td></tr>
+                            <tr><td><strong>经营活动现金流出小计</strong></td><td class="text-right"><strong>1,426亿</strong></td><td class="text-right"><strong>1,096亿</strong></td><td class="text-right"><strong><span class="trend-up">+330亿</span></strong></td><td class="text-right">成本费用支付增加</td></tr>
+                            <tr><td><strong>经营活动产生的现金流量净额</strong></td><td class="text-right"><strong>150.3亿</strong></td><td class="text-right"><strong>161.6亿</strong></td><td class="text-right"><strong><span class="trend-down">-11.3亿</span></strong></td><td class="text-right"><strong>同比减少</strong></td></tr>
+                            
+                            <tr><td colspan="5" style="background-color:rgba(27,58,141,0.05); font-weight:700; padding:10px 12px;">投资活动现金流量</td></tr>
+                            <tr><td><strong>投资活动现金流入小计</strong></td><td class="text-right"><strong>52.34亿</strong></td><td class="text-right"><strong>45.12亿</strong></td><td class="text-right"><span class="trend-up">+7.22亿</span></td><td class="text-right">--</td></tr>
+                            <tr><td><strong>投资活动现金流出小计</strong></td><td class="text-right"><strong>204.3亿</strong></td><td class="text-right"><strong>181.5亿</strong></td><td class="text-right"><span class="trend-up">+22.8亿</span></td><td class="text-right">购建长期资产增加</td></tr>
+                            <tr><td><strong>投资活动产生的现金流量净额</strong></td><td class="text-right"><strong>-151.9亿</strong></td><td class="text-right"><strong>-136.4亿</strong></td><td class="text-right"><span class="trend-down">-15.5亿</span></td><td class="text-right">投资扩大</td></tr>
+                            
+                            <tr><td colspan="5" style="background-color:rgba(27,58,141,0.05); font-weight:700; padding:10px 12px;">融资活动现金流量</td></tr>
+                            <tr><td><strong>融资活动现金流入小计</strong></td><td class="text-right"><strong>237.1亿</strong></td><td class="text-right"><strong>124.9亿</strong></td><td class="text-right"><span class="trend-up">+112.2亿</span></td><td class="text-right">借款增加</td></tr>
+                            <tr><td><strong>融资活动现金流出小计</strong></td><td class="text-right"><strong>134.6亿</strong></td><td class="text-right"><strong>103.7亿</strong></td><td class="text-right"><span class="trend-up">+30.9亿</span></td><td class="text-right">偿还债务付息</td></tr>
+                            <tr><td><strong>融资活动产生的现金流量净额</strong></td><td class="text-right"><strong>102.5亿</strong></td><td class="text-right"><strong>21.20亿</strong></td><td class="text-right"><span class="trend-up">+81.30亿</span></td><td class="text-right">净融资额大增</td></tr>
+                            
+                            <tr><td><strong>现金及现金等价物净增加额</strong></td><td class="text-right"><strong>100.9亿</strong></td><td class="text-right"><strong>46.40亿</strong></td><td class="text-right"><strong><span class="trend-up">+54.50亿</span></strong></td><td class="text-right"><strong>期末现金大幅增加</strong></td></tr>
+                            <tr><td>期末现金及现金等价物余额</td><td class="text-right">531.9亿</td><td class="text-right">414.9亿</td><td class="text-right"><span class="trend-up">+117.0亿</span></td><td class="text-right">流动性增强</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 第三部分：关键财务洞察 -->
+        <section class="insights-section">
+            <h3><i class="fas fa-lightbulb"></i> 关键财务洞察</h3>
+            <div class="insights-content">
+                <div class="insight-block">
+                    <h4><i class="fas fa-chart-line"></i> 增长与盈利分析</h4>
+                    <p>2025上半年营收强劲增长26.5%，毛利率提升至16.45%，但净利率下滑至6.29%，主要受税收支出大幅增加及期间费用增长较快影响。</p>
+                </div>
+                <div class="insight-block">
+                    <h4><i class="fas fa-balance-scale"></i> 资产与负债结构</h4>
+                    <p>总资产稳步增长，现金储备大幅增加23.5%。但资产负债率上升至66.4%，银行借款激增，财务杠杆加大。</p>
+                </div>
+                <div class="insight-block">
+                    <h4><i class="fas fa-exchange-alt"></i> 现金流状况</h4>
+                    <p>经营现金流保持健康（150.3亿），但投资活动现金流净流出扩大，公司处于扩张期。融资活动现金流净额大增，支撑了投资与现金储备。</p>
+                </div>
+                <div class="insight-block">
+                    <h4><i class="fas fa-clipboard-check"></i> 总体评价</h4>
+                    <p>公司处于战略扩张阶段，收入增长与现金储备是亮点，但需关注盈利质量下滑、负债率上升及短期偿债能力的变化。</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 页脚 -->
+        <footer class="footer">
+            <p>数据来源：东方财富网吉利汽车(00175)财务分析 | 报告期：2025年中期 (2025年1月1日-6月30日) | 货币单位：人民币 | 准则：IFRS</p>
+            <p>© 2025 吉利汽车财报BI分析看板 | 数据更新时间: <span id="update-time"></span></p>
+        </footer>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 三大报表切换功能
+        const tabs = document.querySelectorAll('.statement-tab');
+        const contents = {
+            'balance': document.getElementById('balance-sheet-content'),
+            'income': document.getElementById('income-statement-content'),
+            'cashflow': document.getElementById('cashflow-statement-content')
+        };
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // 更新标签状态
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 隐藏所有内容
+                Object.values(contents).forEach(content => {
+                    if (content) content.style.display = 'none';
+                });
+                
+                // 显示选中内容
+                if (contents[tabId]) {
+                    contents[tabId].style.display = 'block';
+                }
+            });
+        });
+        
+        // 更新页脚时间
+        function updateDateTime() {
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).replace(/\//g, '-');
+            
+            const timeElement = document.getElementById('update-time');
+            if (timeElement) {
+                timeElement.textContent = formattedDate;
+            }
+        }
+        
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
+        
+        // 表格行悬停效果
+        const tableRows = document.querySelectorAll('.statement-table tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(27, 58, 141, 0.05)';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+        
+        // 初始化：确保资产负债表默认显示
+        const defaultTab = document.querySelector('.statement-tab.active');
+        if (defaultTab) {
+            const defaultTabId = defaultTab.getAttribute('data-tab');
+            if (contents[defaultTabId]) {
+                contents[defaultTabId].style.display = 'block';
+            }
+        }
+    });
+</script>
+</body>
+</html>

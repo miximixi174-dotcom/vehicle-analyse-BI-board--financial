@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉利汽车 - CFO宏观经济看板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --geely-blue: #003399;
+            --geely-light-blue: #0055cc;
+            --geely-accent: #00a0e9;
+            --geely-dark: #001a4d;
+            --mbb-gray-1: #f8f9fa;
+            --mbb-gray-2: #e9ecef;
+            --mbb-gray-3: #dee2e6;
+            --mbb-gray-4: #6c757d;
+            --mbb-gray-5: #495057;
+            --mbb-gray-6: #212529;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --domestic-color: #003399;
+            --international-color: #28a745;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: var(--mbb-gray-6);
+            min-height: 100vh;
+            letter-spacing: 0.01em;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+        
+        /* 顶部标题栏 */
+        .top-header {
+            background: linear-gradient(135deg, var(--geely-dark) 0%, var(--geely-blue) 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 51, 153, 0.2);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--geely-blue);
+            font-size: 22px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.03em;
+        }
+        
+        .logo-text p {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .header-title {
+            border-left: 2px solid rgba(255, 255, 255, 0.3);
+            padding-left: 20px;
+        }
+        
+        .header-title h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .header-title p {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .date-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .date-info i {
+            font-size: 14px;
+        }
+        
+        /* 新增：关键指标卡片行 */
+        .key-metrics-row {
+            padding: 12px 20px;
+            background-color: white;
+            border-bottom: 1px solid var(--mbb-gray-2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            z-index: 5;
+            overflow-x: auto;
+            white-space: nowrap;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .key-metric-card {
+            flex: 1;
+            min-width: 180px;
+            background: white;
+            border-radius: 10px;
+            padding: 18px 20px;
+            border: 1px solid var(--mbb-gray-2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .key-metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 51, 153, 0.1);
+            border-color: var(--geely-light-blue);
+        }
+        
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .metric-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--mbb-gray-5);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .metric-trend {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        
+        .trend-up {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-green);
+        }
+        
+        .trend-down {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-red);
+        }
+        
+        .trend-neutral {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: var(--mbb-gray-4);
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--geely-blue);
+            line-height: 1.1;
+            margin-bottom: 4px;
+            letter-spacing: -0.02em;
+        }
+        
+        .metric-unit {
+            font-size: 14px;
+            color: var(--mbb-gray-4);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+        
+        .metric-subtitle {
+            font-size: 11px;
+            color: var(--mbb-gray-4);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        
+        .metric-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+            font-size: 16px;
+            color: white;
+        }
+        
+        .metric-icon.blue {
+            background: linear-gradient(135deg, var(--geely-blue) 0%, var(--geely-light-blue) 100%);
+        }
+        
+        .metric-icon.green {
+            background: linear-gradient(135deg, var(--success-green) 0%, #20c997 100%);
+        }
+        
+        .metric-icon.orange {
+            background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+        }
+        
+        .metric-icon.purple {
+            background: linear-gradient(135deg, #6f42c1 0%, #a370f7 100%);
+        }
+        
+        .metric-icon.red {
+            background: linear-gradient(135deg, var(--danger-red) 0%, #ff6b6b 100%);
+        }
+        
+        .metric-icon.teal {
+            background: linear-gradient(135deg, #20c997 0%, #3dd5f3 100%);
+        }
+        
+        /* 主仪表板容器 */
+        .dashboard-container {
+            display: flex;
+            height: calc(100vh - 78px - 94px); /* 减去顶部标题栏和关键指标行的高度 */
+            padding: 20px;
+            gap: 20px;
+            background-color: #f0f2f5;
+        }
+        
+        /* 列样式 */
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--mbb-gray-2);
+            overflow: hidden;
+            min-width: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .column:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        
+        .column-header {
+            padding: 20px 25px 15px;
+            border-bottom: 1px solid var(--mbb-gray-2);
+            flex-shrink: 0;
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+        
+        .column-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .column-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 18px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .domestic .column-icon {
+            background: linear-gradient(135deg, var(--domestic-color) 0%, #0055cc 100%);
+        }
+        
+        .international .column-icon {
+            background: linear-gradient(135deg, var(--international-color) 0%, #20c997 100%);
+        }
+        
+        .column-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--mbb-gray-6);
+        }
+        
+        .column-header p {
+            font-size: 13px;
+            color: var(--mbb-gray-4);
+            margin-left: 55px;
+        }
+        
+        .column-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        /* 图表卡片 */
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--mbb-gray-2);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .chart-card:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .chart-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--mbb-gray-6);
+            margin-bottom: 4px;
+        }
+        
+        .chart-subtitle {
+            font-size: 12px;
+            color: var(--mbb-gray-4);
+            font-weight: 500;
+        }
+        
+        .chart-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-light.green {
+            background-color: var(--success-green);
+            box-shadow: 0 0 6px rgba(40, 167, 69, 0.4);
+        }
+        
+        .status-light.yellow {
+            background-color: var(--warning-yellow);
+            box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
+        }
+        
+        .status-light.red {
+            background-color: var(--danger-red);
+            box-shadow: 0 0 6px rgba(220, 53, 69, 0.4);
+        }
+        
+        .status-text {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--mbb-gray-5);
+        }
+        
+        .chart-value {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 15px;
+        }
+        
+        .chart-value .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--mbb-gray-6);
+        }
+        
+        .chart-value .unit {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--mbb-gray-4);
+            margin-left: 5px;
+        }
+        
+        .chart-change {
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+            margin-left: 10px;
+        }
+        
+        .change-positive {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-green);
+        }
+        
+        .change-negative {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-red);
+        }
+        
+        .change-neutral {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: var(--mbb-gray-4);
+        }
+        
+        .chart-container {
+            height: 200px;
+            width: 100%;
+        }
+        
+        /* 按钮组样式 */
+        .chart-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .chart-btn {
+            background: white;
+            border: 1px solid var(--mbb-gray-3);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--mbb-gray-5);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .chart-btn:hover {
+            border-color: var(--geely-blue);
+            color: var(--geely-blue);
+        }
+        
+        .chart-btn.active {
+            background-color: var(--geely-blue);
+            color: white;
+            border-color: var(--geely-blue);
+        }
+        
+        /* 表格样式 */
+        .logistics-table, .cfets-table, .material-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .logistics-table th, .cfets-table th, .material-table th {
+            background-color: rgba(0, 0, 0, 0.02);
+            color: var(--mbb-gray-5);
+            font-weight: 600;
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            border-bottom: 1px solid var(--mbb-gray-2);
+        }
+        
+        .logistics-table td, .cfets-table td, .material-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--mbb-gray-2);
+            font-size: 12px;
+        }
+        
+        .logistics-table tr:last-child td, 
+        .cfets-table tr:last-child td,
+        .material-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .logistics-table tr:hover, 
+        .cfets-table tr:hover,
+        .material-table tr:hover {
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+        
+        .logistics-value {
+            font-weight: 600;
+            color: var(--mbb-gray-6);
+        }
+        
+        /* 政策新闻速览样式 */
+        .policy-news-module {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--mbb-gray-2);
+            display: flex;
+            flex-direction: column;
+            height: 400px; /* 固定高度 */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .policy-news-module:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .module-header {
+            background: linear-gradient(135deg, #003399 0%, #0055cc 100%);
+            color: white;
+            padding: 18px 22px;
+            flex-shrink: 0;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .module-title h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .module-title p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .update-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .update-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: #34c759;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* 可滚动的表格容器 */
+        .scrollable-table-wrapper {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .scrollable-table-container {
+            height: 100%;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        /* 自定义滚动条样式 */
+        .scrollable-table-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .scrollable-table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .scrollable-table-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .scrollable-table-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* 表格样式 */
+        .news-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        /* 固定表头 */
+        .news-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: var(--mbb-gray-1);
+            border-bottom: 2px solid var(--mbb-gray-2);
+        }
+        
+        .news-table th {
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--mbb-gray-5);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .news-table tbody tr {
+            border-bottom: 1px solid var(--mbb-gray-2);
+            transition: background-color 0.2s;
+        }
+        
+        .news-table tbody tr:hover {
+            background-color: #f9fbfe;
+        }
+        
+        .news-table td {
+            padding: 14px 15px;
+            vertical-align: top;
+        }
+        
+        .news-index {
+            font-weight: 600;
+            color: var(--geely-blue);
+            font-size: 14px;
+            width: 50px;
+        }
+        
+        .news-title a {
+            color: var(--mbb-gray-6);
+            text-decoration: none;
+            font-weight: 500;
+            line-height: 1.4;
+            display: block;
+            transition: color 0.2s;
+            font-size: 13px;
+        }
+        
+        .news-title a:hover {
+            color: var(--geely-blue);
+            text-decoration: underline;
+        }
+        
+        .news-excerpt {
+            font-size: 12px;
+            color: var(--mbb-gray-4);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+        
+        .news-media {
+            color: var(--mbb-gray-4);
+            font-size: 12px;
+            min-width: 80px;
+        }
+        
+        .news-media.gov {
+            color: #003399;
+            font-weight: 500;
+        }
+        
+        .news-media.news {
+            color: #e74c3c;
+        }
+        
+        .news-time {
+            color: var(--mbb-gray-4);
+            font-size: 12px;
+            white-space: nowrap;
+            min-width: 80px;
+        }
+        
+        .news-time.recent {
+            color: #28a745;
+            font-weight: 500;
+        }
+        
+        .link-icon {
+            display: inline-block;
+            margin-left: 4px;
+            color: #aaa;
+            font-size: 11px;
+        }
+        
+        /* 底部提示渐变 */
+        .scroll-bottom-fade {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 6px;
+            height: 20px;
+            background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .module-footer {
+            padding: 12px 22px;
+            background-color: var(--mbb-gray-1);
+            border-top: 1px solid var(--mbb-gray-2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--mbb-gray-4);
+            flex-shrink: 0;
+        }
+        
+        .trend-tag {
+            display: inline-block;
+            background: rgba(0, 51, 153, 0.1);
+            color: var(--geely-blue);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        
+        /* 自定义滚动条 */
+        .column-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .column-content::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+        
+        .column-content::-webkit-scrollbar-thumb {
+            background: var(--mbb-gray-3);
+            border-radius: 10px;
+        }
+        
+        .column-content::-webkit-scrollbar-thumb:hover {
+            background: var(--mbb-gray-4);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1400px) {
+            .dashboard-container {
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .column-content {
+                padding: 15px 20px;
+                gap: 20px;
+            }
+            
+            .chart-card {
+                padding: 15px;
+            }
+            
+            .chart-container {
+                height: 180px;
+            }
+            
+            .policy-news-module {
+                height: 380px;
+            }
+            
+            .key-metric-card {
+                min-width: 160px;
+                padding: 15px 18px;
+            }
+            
+            .metric-value {
+                font-size: 28px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+            }
+            
+            .column {
+                min-height: 600px;
+            }
+            
+            .top-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 15px 20px;
+            }
+            
+            .header-left, .header-right {
+                width: 100%;
+            }
+            
+            .key-metrics-row {
+                padding: 10px 15px;
+                gap: 10px;
+            }
+            
+            .key-metric-card {
+                min-width: 150px;
+                padding: 12px 15px;
+            }
+            
+            .metric-value {
+                font-size: 24px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .key-metrics-row {
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
+            
+            .key-metric-card {
+                min-width: 140px;
+            }
+            
+            .metric-value {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题栏 -->
+    <div class="top-header">
+        <div class="header-left">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>吉利汽车</h1>
+                    <p>Geely Auto Financial Intelligence</p>
+                </div>
+            </div>
+            <div class="header-title">
+                <h2>CFO宏观经济看板</h2>
+                <p>实时监控关键经济指标，支持财务战略决策</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="date-info">
+                <i class="fas fa-sync-alt"></i>
+                <span>数据更新时间: 2025-01-15 09:30</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 新增：关键指标卡片行 -->
+    <section class="key-metrics-row">
+        <div class="key-metric-card">
+            <div class="metric-header">
+                <div class="metric-title">汽车制造业指数</div>
+                <div class="metric-trend trend-up"><i class="fas fa-arrow-up"></i> 0.8%</div>
+            </div>
+            <div>
+                <div class="metric-value">52.8<span class="metric-unit">%</span></div>
+                <div class="metric-subtitle">2025年12月 • 国家统计局</div>
+            </div>
+            <div class="metric-icon blue">
+                <i class="fas fa-industry"></i>
+            </div>
+        </div>
+        
+        <div class="key-metric-card">
+            <div class="metric-header">
+                <div class="metric-title">人民币汇率</div>
+                <div class="metric-trend trend-down"><i class="fas fa-arrow-down"></i> 0.28%</div>
+            </div>
+            <div>
+                <div class="metric-value">7.18<span class="metric-unit">CNY/USD</span></div>
+                <div class="metric-subtitle">中国人民银行 • 外汇交易中心</div>
+            </div>
+            <div class="metric-icon green">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+        </div>
+        
+        <div class="key-metric-card">
+            <div class="metric-header">
+                <div class="metric-title">钢材价格</div>
+                <div class="metric-trend trend-up"><i class="fas fa-arrow-up"></i> 1.45%</div>
+            </div>
+            <div>
+                <div class="metric-value">4,150<span class="metric-unit">元/吨</span></div>
+                <div class="metric-subtitle">上海期货交易所 • 热轧卷板</div>
+            </div>
+            <div class="metric-icon orange">
+                <i class="fas fa-weight"></i>
+            </div>
+        </div>
+        
+        <div class="key-metric-card">
+            <div class="metric-header">
+                <div class="metric-title">供应链稳定性</div>
+                <div class="metric-trend trend-up"><i class="fas fa-arrow-up"></i> 1.2%</div>
+            </div>
+            <div>
+                <div class="metric-value">95.2<span class="metric-unit">指数</span></div>
+                <div class="metric-subtitle">中国物流与采购联合会 • 2025年12月</div>
+            </div>
+            <div class="metric-icon purple">
+                <i class="fas fa-truck-loading"></i>
+            </div>
+        </div>
+        
+        <div class="key-metric-card">
+            <div class="metric-header">
+                <div class="metric-title">SHIBOR利率</div>
+                <div class="metric-trend trend-up"><i class="fas fa-arrow-up"></i> 0.8BP</div>
+            </div>
+            <div>
+                <div class="metric-value">2.20<span class="metric-unit">%</span></div>
+                <div class="metric-subtitle">3个月期 • 货币市场利率</div>
+            </div>
+            <div class="metric-icon red">
+                <i class="fas fa-percentage"></i>
+            </div>
+        </div>
+        
+        <div class="key-metric-card">
+            <div class="metric-header">
+                <div class="metric-title">波罗的海指数</div>
+                <div class="metric-trend trend-up"><i class="fas fa-arrow-up"></i> 0.3%</div>
+            </div>
+            <div>
+                <div class="metric-value">1,820<span class="metric-unit">BDI</span></div>
+                <div class="metric-subtitle">国际航运运价 • 干散货指数</div>
+            </div>
+            <div class="metric-icon teal">
+                <i class="fas fa-ship"></i>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 主仪表板 -->
+    <div class="dashboard-container">
+        <!-- 第一列：国内市场 -->
+        <div class="column domestic">
+            <div class="column-header">
+                <div class="column-title">
+                    <div class="column-icon">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <h2>国内市场</h2>
+                </div>
+                <p>宏观经济与政策、供应链、原材料</p>
+            </div>
+            <div class="column-content">
+                <!-- 1. 汽车制造业指数 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>汽车制造业指数</h3>
+                            <div class="chart-subtitle">国家统计局 • 2025年12月</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light green"></div>
+                            <div class="status-text">扩张区间</div>
+                        </div>
+                    </div>
+                    <div class="chart-value">
+                        <span class="value">52.8</span>
+                        <span class="unit">%</span>
+                        <span class="chart-change change-positive">
+                            <i class="fas fa-arrow-up"></i>0.8%
+                        </span>
+                    </div>
+                    <div class="chart-container" id="pmi-chart"></div>
+                </div>
+                
+                <!-- 2. 大宗原材料价格监测表 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>大宗原材料价格监测表</h3>
+                            <div class="chart-subtitle">上海/广州期货交易所 • 主力合约</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light yellow"></div>
+                            <div class="status-text">部分上涨</div>
+                        </div>
+                    </div>
+                    <table class="material-table">
+                        <thead>
+                            <tr>
+                                <th>原材料</th>
+                                <th>当前价格</th>
+                                <th>月度变化</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>钢铁 (热轧卷板)</td>
+                                <td class="logistics-value">4,150 元/吨</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+1.45%</span></td>
+                                <td>上涨</td>
+                            </tr>
+                            <tr>
+                                <td>碳酸锂 (电池级)</td>
+                                <td class="logistics-value">105,000 元/吨</td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-2.78%</span></td>
+                                <td>下跌</td>
+                            </tr>
+                            <tr>
+                                <td>铝 (A00铝锭)</td>
+                                <td class="logistics-value">19,200 元/吨</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+0.52%</span></td>
+                                <td>上涨</td>
+                            </tr>
+                            <tr>
+                                <td>橡胶 (天然橡胶)</td>
+                                <td class="logistics-value">12,500 元/吨</td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-0.79%</span></td>
+                                <td>下跌</td>
+                            </tr>
+                            <tr>
+                                <td>铜 (电解铜)</td>
+                                <td class="logistics-value">68,500 元/吨</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+0.88%</span></td>
+                                <td>上涨</td>
+                            </tr>
+                            <tr>
+                                <td>塑料 (PP)</td>
+                                <td class="logistics-value">7,850 元/吨</td>
+                                <td><span class="chart-change change-neutral" style="font-size: 10px; padding: 2px 6px;">0.00%</span></td>
+                                <td>平稳</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 3. 国内大宗商品价格 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>国内大宗商品价格</h3>
+                            <div class="chart-subtitle">上海期货交易所 • 主力合约价格走势</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light yellow"></div>
+                            <div class="status-text">价格波动</div>
+                        </div>
+                    </div>
+                    <div class="chart-value">
+                        <span class="value">4,150</span>
+                        <span class="unit">元/吨</span>
+                        <span class="chart-change change-positive">
+                            <i class="fas fa-arrow-up"></i>1.45%
+                        </span>
+                    </div>
+                    <div class="chart-buttons">
+                        <button class="chart-btn active" data-material="steel">钢铁</button>
+                        <button class="chart-btn" data-material="lithium">碳酸锂</button>
+                        <button class="chart-btn" data-material="aluminum">铝</button>
+                        <button class="chart-btn" data-material="copper">铜</button>
+                    </div>
+                    <div class="chart-container" id="domestic-commodity-chart"></div>
+                </div>
+                
+                <!-- 4. 供应链稳定性指数表 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>供应链稳定性指数表</h3>
+                            <div class="chart-subtitle">中国物流与采购联合会 • 2025年12月</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light green"></div>
+                            <div class="status-text">良好</div>
+                        </div>
+                    </div>
+                    <table class="logistics-table">
+                        <thead>
+                            <tr>
+                                <th>指标类型</th>
+                                <th>当前值</th>
+                                <th>月度变化</th>
+                                <th>同比变化</th>
+                                <th>影响评估</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>供应链稳定性指数</td>
+                                <td class="logistics-value">95.2</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+1.2%</span></td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+3.8%</span></td>
+                                <td>正常</td>
+                            </tr>
+                            <tr>
+                                <td>供应商交付时间指数</td>
+                                <td class="logistics-value">92.5</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+0.8%</span></td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+5.2%</span></td>
+                                <td>良好</td>
+                            </tr>
+                            <tr>
+                                <td>库存周转指数</td>
+                                <td class="logistics-value">88.7</td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-0.5%</span></td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+2.1%</span></td>
+                                <td>正常</td>
+                            </tr>
+                            <tr>
+                                <td>物流效率指数</td>
+                                <td class="logistics-value">96.8</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+1.5%</span></td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+4.3%</span></td>
+                                <td>优秀</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 5. 汽车行业政策新闻速览 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>汽车行业政策新闻速览</h3>
+                            <div class="chart-subtitle">实时追踪政策动态，把握行业风向</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light green"></div>
+                            <div class="status-text">今日更新</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 政策新闻速览模块 -->
+                    <div class="policy-news-module">
+                        <!-- 可滚动的表格区域 -->
+                        <div class="scrollable-table-wrapper">
+                            <div class="scrollable-table-container" id="newsTableContainer">
+                                <table class="news-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 60px;">序号</th>
+                                            <th>新闻标题</th>
+                                            <th style="width: 100px;">媒体</th>
+                                            <th style="width: 100px;">时间</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="news-index">01</td>
+                                            <td class="news-title">
+                                                <a href="https://www.chinanews.com.cn/cj/2025/09-11/10480553.shtml" target="_blank">
+                                                    2026年买新能源车恢复征税，车购税至少缴5%
+                                                    <span class="link-icon">↗</span>
+                                                </a>
+                                                <div class="news-excerpt">新能源汽车车辆购置税政策调整，将从2026年开始实施新规。</div>
+                                            </td>
+                                            <td class="news-media news">中国新闻网</td>
+                                            <td class="news-time">2025-09-11</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="news-index">02</td>
+                                            <td class="news-title">
+                                                <a href="https://m.thepaper.cn/newsDetail_forward_32355795" target="_blank">
+                                                    这些汽车新规，1月起实施！
+                                                    <span class="link-icon">↗</span>
+                                                </a>
+                                                <div class="news-excerpt">梳理2026年1月起实施的各项汽车行业新规定与政策。</div>
+                                            </td>
+                                            <td class="news-media news">澎湃新闻</td>
+                                            <td class="news-time">2026-01-09</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="news-index">03</td>
+                                            <td class="news-title">
+                                                <a href="https://www-lf.dongchedi.com/article/7565838559375917610" target="_blank">
+                                                    中汽协呼吁车购税阶梯式退出 助力行业平稳转型
+                                                    <span class="link-icon">↗</span>
+                                                </a>
+                                                <div class="news-excerpt">行业协会建议采用渐进式政策调整，避免市场剧烈波动。</div>
+                                            </td>
+                                            <td class="news-media">懂车帝</td>
+                                            <td class="news-time">2025-10-26</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="news-index">04</td>
+                                            <td class="news-title">
+                                                <a href="https://chejiahao.autohome.com.cn/info/23107066?reply=reply#pvareaid=2808221" target="_blank">
+                                                    2026年起实施：节能与新能源车型车船税优惠技术要求正式更新
+                                                    <span class="link-icon">↗</span>
+                                                </a>
+                                                <div class="news-excerpt">车船税优惠政策同步更新技术要求，引导行业技术升级。</div>
+                                            </td>
+                                            <td class="news-media">汽车之家</td>
+                                            <td class="news-time">2026-01-09</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="news-index">05</td>
+                                            <td class="news-title">
+                                                <a href="https://data.eastmoney.com/report/zw_industry.jshtml?encodeUrl=kIwPO1Ct+MRZqqOkXrDevzGO/kPauhx5pnLqiYD72yU=" target="_blank">
+                                                    汽车行业研究周报：2026年汽车"按比例"补贴，滴灌长流
+                                                    <span class="link-icon">↗</span>
+                                                </a>
+                                                <div class="news-excerpt">分析2026年补贴政策从"定额"到"按比例"转变的影响。</div>
+                                            </td>
+                                            <td class="news-media">东方财富网</td>
+                                            <td class="news-time">2026-01-13</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="news-index">06</td>
+                                            <td class="news-title">
+                                                <a href="https://ynlf.gov.cn/info/4143/180074.htm" target="_blank">
+                                                    关于2026—2027年减免车辆购置税新能源汽车产品技术要求的公告
+                                                    <span class="link-icon">↗</span>
+                                                </a>
+                                                <div class="news-excerpt">三部委联合发布未来两年新能源汽车购置税减免技术要求。</div>
+                                            </td>
+                                            <td class="news-media gov">政府部门</td>
+                                            <td class="news-time">2025-11-19</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <!-- 底部渐变提示 -->
+                                <div class="scroll-bottom-fade"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 模块底部区域 -->
+                        <div class="module-footer">
+                            <div>
+                                <span>政策聚焦 <span class="trend-tag">2026年调整</span></span>
+                                <span class="trend-tag">购置税变化</span>
+                                <span class="trend-tag">补贴新政</span>
+                            </div>
+                            <div>共 <strong id="newsCount">6</strong> 条核心动态</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 第二列：国际市场 -->
+        <div class="column international">
+            <div class="column-header">
+                <div class="column-title">
+                    <div class="column-icon">
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                    <h2>国际市场</h2>
+                </div>
+                <p>金融市场、汇率、国际风险</p>
+            </div>
+            <div class="column-content">
+                <!-- 人民币对外币汇率 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>人民币对外币汇率</h3>
+                            <div class="chart-subtitle">中国人民银行 • 外汇交易中心</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light green"></div>
+                            <div class="status-text">相对稳定</div>
+                        </div>
+                    </div>
+                    <div class="chart-value">
+                        <span class="value">7.18</span>
+                        <span class="unit">CNY/USD</span>
+                        <span class="chart-change change-positive">
+                            <i class="fas fa-arrow-down"></i>0.28%
+                        </span>
+                    </div>
+                    <div class="chart-buttons">
+                        <button class="chart-btn active" data-currency="usd">美元</button>
+                        <button class="chart-btn" data-currency="eur">欧元</button>
+                        <button class="chart-btn" data-currency="gbp">英镑</button>
+                        <button class="chart-btn" data-currency="jpy">日元</button>
+                    </div>
+                    <div class="chart-container" id="rmb-exchange-chart"></div>
+                </div>
+                
+                <!-- CFETS实时债券指数 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>CFETS实时债券指数</h3>
+                            <div class="chart-subtitle">中国外汇交易中心 • 实时</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light green"></div>
+                            <div class="status-text">正常</div>
+                        </div>
+                    </div>
+                    <div class="chart-value">
+                        <span class="value">224.53</span>
+                        <span class="chart-change change-positive">
+                            <i class="fas fa-arrow-up"></i>0.12%
+                        </span>
+                    </div>
+                    
+                    <!-- CFETS汇率指数表格 -->
+                    <table class="cfets-table">
+                        <thead>
+                            <tr>
+                                <th>指数类型</th>
+                                <th>当前值</th>
+                                <th>月度变化</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CFETS人民币汇率指数</td>
+                                <td class="logistics-value">98.75</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+0.05%</span></td>
+                            </tr>
+                            <tr>
+                                <td>BIS货币篮子人民币汇率指数</td>
+                                <td class="logistics-value">103.21</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+0.12%</span></td>
+                            </tr>
+                            <tr>
+                                <td>SDR货币篮子人民币汇率指数</td>
+                                <td class="logistics-value">93.45</td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-0.08%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="chart-container" id="bond-index-chart"></div>
+                </div>
+                
+                <!-- 市场利率指标 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>市场利率指标</h3>
+                            <div class="chart-subtitle">中国人民银行 • 货币市场</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light green"></div>
+                            <div class="status-text">稳定</div>
+                        </div>
+                    </div>
+                    <div class="chart-value">
+                        <span class="value">3.55</span>
+                        <span class="unit">%</span>
+                        <span class="chart-change change-neutral">
+                            <i class="fas fa-minus"></i>0.00%
+                        </span>
+                    </div>
+                    
+                    <!-- SHIBOR表格 -->
+                    <table class="cfets-table" style="margin-bottom: 15px;">
+                        <thead>
+                            <tr>
+                                <th>SHIBOR期限</th>
+                                <th>利率(%)</th>
+                                <th>变化(BP)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>隔夜 (O/N)</td>
+                                <td class="logistics-value">1.78</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+2.1</span></td>
+                            </tr>
+                            <tr>
+                                <td>1周 (1W)</td>
+                                <td class="logistics-value">1.95</td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-1.5</span></td>
+                            </tr>
+                            <tr>
+                                <td>1个月 (1M)</td>
+                                <td class="logistics-value">2.05</td>
+                                <td><span class="chart-change change-neutral" style="font-size: 10px; padding: 2px 6px;">0.0</span></td>
+                            </tr>
+                            <tr>
+                                <td>3个月 (3M)</td>
+                                <td class="logistics-value">2.20</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+0.8</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="chart-container" id="interest-rate-chart"></div>
+                </div>
+                
+                <!-- 国际大宗商品价格 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>国际大宗商品价格</h3>
+                            <div class="chart-subtitle">伦敦/纽约交易所 • 主力合约</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light yellow"></div>
+                            <div class="status-text">波动较大</div>
+                        </div>
+                    </div>
+                    <div class="chart-value">
+                        <span class="value">85.2</span>
+                        <span class="unit">美元/桶</span>
+                        <span class="chart-change change-positive">
+                            <i class="fas fa-arrow-up"></i>2.1%
+                        </span>
+                    </div>
+                    <div class="chart-buttons">
+                        <button class="chart-btn active" data-commodity="oil">原油</button>
+                        <button class="chart-btn" data-commodity="gold">黄金</button>
+                        <button class="chart-btn" data-commodity="copper">铜</button>
+                        <button class="chart-btn" data-commodity="iron">铁矿石</button>
+                    </div>
+                    <div class="chart-container" id="international-commodity-chart"></div>
+                </div>
+                
+                <!-- 国际物流运价指数 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <h3>国际物流运价指数</h3>
+                            <div class="chart-subtitle">波罗的海交易所 • 国际航运</div>
+                        </div>
+                        <div class="chart-status">
+                            <div class="status-light green"></div>
+                            <div class="status-text">成本可控</div>
+                        </div>
+                    </div>
+                    <table class="logistics-table">
+                        <thead>
+                            <tr>
+                                <th>指数类型</th>
+                                <th>当前值</th>
+                                <th>月度变化</th>
+                                <th>同比变化</th>
+                                <th>影响评估</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>波罗的海干散货指数 (BDI)</td>
+                                <td class="logistics-value">1,820.5</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+0.3%</span></td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-2.1%</span></td>
+                                <td>正常</td>
+                            </tr>
+                            <tr>
+                                <td>上海出口集装箱运价指数 (SCFI)</td>
+                                <td class="logistics-value">1,120.5</td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-1.2%</span></td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-15.8%</span></td>
+                                <td>有利</td>
+                            </tr>
+                            <tr>
+                                <td>中国出口集装箱运价指数 (CCFI)</td>
+                                <td class="logistics-value">985.5</td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+0.5%</span></td>
+                                <td><span class="chart-change change-positive" style="font-size: 10px; padding: 2px 6px;">+3.2%</span></td>
+                                <td>正常</td>
+                            </tr>
+                            <tr>
+                                <td>跨太平洋运价指数 (TPM)</td>
+                                <td class="logistics-value">1,052.2</td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-0.8%</span></td>
+                                <td><span class="chart-change change-negative" style="font-size: 10px; padding: 2px 6px;">-12.5%</span></td>
+                                <td>有利</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化ECharts图表
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化所有图表
+            initPMIChart();
+            initRMBExchangeChart();
+            initBondIndexChart();
+            initInterestRateChart();
+            initDomesticCommodityChart();
+            initInternationalCommodityChart();
+            
+            // 绑定按钮组点击事件
+            document.querySelectorAll('.chart-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const parent = this.parentElement;
+                    parent.querySelectorAll('.chart-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // 更新对应图表
+                    const card = this.closest('.chart-card');
+                    if (card.querySelector('#rmb-exchange-chart')) {
+                        const currency = this.getAttribute('data-currency');
+                        updateExchangeChart(currency);
+                    } else if (card.querySelector('#domestic-commodity-chart')) {
+                        const material = this.getAttribute('data-material');
+                        updateDomesticCommodityChart(material);
+                    } else if (card.querySelector('#international-commodity-chart')) {
+                        const commodity = this.getAttribute('data-commodity');
+                        updateInternationalCommodityChart(commodity);
+                    }
+                });
+            });
+            
+            // 初始化新闻速览模块
+            initNewsModule();
+            
+            // 关键指标卡片点击交互
+            document.querySelectorAll('.key-metric-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const metricTitle = this.querySelector('.metric-title').textContent;
+                    alert(`已选中指标: ${metricTitle} - 可以在此处添加更多交互功能，如跳转到详细分析页面等。`);
+                });
+            });
+            
+            // 窗口大小调整时重新调整图表
+            window.addEventListener('resize', function() {
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 100);
+            });
+        });
+        
+        // 初始化汽车制造业指数雷达图
+        function initPMIChart() {
+            const chart = echarts.init(document.getElementById('pmi-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return `${params.name}: ${params.value}%`;
+                    }
+                },
+                radar: {
+                    indicator: [
+                        { name: '新订单', max: 60 },
+                        { name: '生产量', max: 60 },
+                        { name: '从业人员', max: 60 },
+                        { name: '配送时间', max: 60 },
+                        { name: '原材料库存', max: 60 },
+                        { name: '出口订单', max: 60 }
+                    ],
+                    shape: 'circle',
+                    splitNumber: 4,
+                    axisName: {
+                        color: '#495057',
+                        fontSize: 10,
+                        fontWeight: '500'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: ['rgba(0, 51, 153, 0.1)', 'rgba(0, 51, 153, 0.2)', 'rgba(0, 51, 153, 0.3)', 'rgba(0, 51, 153, 0.4)']
+                        }
+                    },
+                    splitArea: {
+                        show: true,
+                        areaStyle: {
+                            color: ['rgba(0, 51, 153, 0.02)', 'rgba(0, 51, 153, 0.05)', 'rgba(0, 51, 153, 0.08)', 'rgba(0, 51, 153, 0.1)']
+                        }
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: 'rgba(0, 51, 153, 0.3)'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: '汽车制造业指数',
+                        type: 'radar',
+                        data: [
+                            {
+                                value: [54.8, 55.5, 52.2, 50.5, 51.8, 53.5],
+                                name: '当前值',
+                                symbol: 'circle',
+                                symbolSize: 5,
+                                lineStyle: {
+                                    width: 2,
+                                    color: '#003399'
+                                },
+                                areaStyle: {
+                                    color: 'rgba(0, 51, 153, 0.2)'
+                                },
+                                itemStyle: {
+                                    color: '#003399'
+                                }
+                            },
+                            {
+                                value: [50.0, 50.0, 50.0, 50.0, 50.0, 50.0],
+                                name: '荣枯线',
+                                lineStyle: {
+                                    type: 'dashed',
+                                    width: 1,
+                                    color: '#6c757d'
+                                },
+                                itemStyle: {
+                                    color: '#6c757d'
+                                }
+                            }
+                        ]
+                    }
+                ],
+                legend: {
+                    bottom: 5,
+                    data: ['当前值', '荣枯线'],
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                }
+            };
+            
+            chart.setOption(option);
+        }
+        
+        // 初始化新闻速览模块
+        function initNewsModule() {
+            const container = document.getElementById('newsTableContainer');
+            const scrollHint = document.getElementById('scrollHint');
+            const newsCount = document.getElementById('newsCount');
+            
+            // 自动高亮最近一周的新闻
+            const timeCells = document.querySelectorAll('.news-time');
+            const now = new Date();
+            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            
+            timeCells.forEach(cell => {
+                const timeText = cell.textContent.trim();
+                // 简单解析日期
+                const newsDate = new Date(timeText);
+                if (!isNaN(newsDate) && newsDate > oneWeekAgo) {
+                    cell.classList.add('recent');
+                }
+            });
+            
+            // 动态更新滚动提示
+            function updateScrollHint() {
+                const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 2;
+                scrollHint.textContent = isAtBottom ? '已到底部' : '滚动浏览';
+            }
+            
+            container.addEventListener('scroll', updateScrollHint);
+            updateScrollHint(); // 初始化提示
+            
+            // 计算并显示新闻总数
+            const rowCount = document.querySelectorAll('.news-table tbody tr').length;
+            newsCount.textContent = rowCount;
+            
+            // 行点击交互
+            const tableRows = document.querySelectorAll('.news-table tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('click', function(e) {
+                    // 如果点击的不是链接本身，才触发整行点击打开链接
+                    if (!e.target.closest('a')) {
+                        const link = this.querySelector('a');
+                        if (link) {
+                            window.open(link.href, '_blank');
+                        }
+                    }
+                });
+            });
+        }
+        
+        // 初始化人民币汇率图表
+        function initRMBExchangeChart() {
+            const chart = echarts.init(document.getElementById('rmb-exchange-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const value = params[0].value;
+                        return `${params[0].name}: ${value} CNY/USD`;
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['7月', '8月', '9月', '10月', '11月', '12月'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    min: 7.0,
+                    max: 7.4,
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '人民币兑美元汇率',
+                        type: 'line',
+                        data: [7.35, 7.28, 7.25, 7.22, 7.20, 7.18],
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#003399' 
+                        },
+                        itemStyle: { 
+                            color: '#003399' 
+                        },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(0, 51, 153, 0.2)' },
+                                { offset: 1, color: 'rgba(0, 51, 153, 0.05)' }
+                            ])
+                        }
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '10%',
+                    bottom: '15%'
+                }
+            };
+            
+            chart.setOption(option);
+        }
+        
+        // 更新汇率图表（根据选择的货币）
+        function updateExchangeChart(currency) {
+            const chart = echarts.getInstanceByDom(document.getElementById('rmb-exchange-chart'));
+            
+            if (!chart) return;
+            
+            let data, color, yMin, yMax;
+            
+            // 根据选择的货币显示不同的数据
+            if (currency === 'usd') {
+                data = [7.35, 7.28, 7.25, 7.22, 7.20, 7.18];
+                color = '#003399';
+                yMin = 7.0;
+                yMax = 7.4;
+                
+                // 更新环比显示
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-down"></i>0.28%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            } else if (currency === 'eur') {
+                data = [7.90, 7.88, 7.86, 7.85, 7.85, 7.85];
+                color = '#28a745';
+                yMin = 7.8;
+                yMax = 8.0;
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-down"></i>0.13%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            } else if (currency === 'gbp') {
+                data = [9.25, 9.20, 9.15, 9.12, 9.12, 9.12];
+                color = '#dc3545';
+                yMin = 9.0;
+                yMax = 9.3;
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-down"></i>0.32%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            } else if (currency === 'jpy') {
+                data = [5.05, 5.03, 5.02, 5.01, 5.00, 4.99];
+                color = '#6f42c1';
+                yMin = 4.8;
+                yMax = 5.2;
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-down"></i>0.20%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            }
+            
+            const option = {
+                series: [{
+                    data: data,
+                    lineStyle: { 
+                        color: color 
+                    },
+                    itemStyle: { 
+                        color: color 
+                    },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: color.replace(')', ', 0.2)').replace('rgb', 'rgba') },
+                            { offset: 1, color: color.replace(')', ', 0.05)').replace('rgb', 'rgba') }
+                        ])
+                    }
+                }],
+                yAxis: {
+                    min: yMin,
+                    max: yMax
+                }
+            };
+            
+            chart.setOption(option);
+        }
+        
+        // 初始化债券指数图表
+        function initBondIndexChart() {
+            const chart = echarts.init(document.getElementById('bond-index-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        label: {
+                            backgroundColor: '#6a7985'
+                        }
+                    }
+                },
+                legend: {
+                    top: 5,
+                    data: ['国债指数', '企业债指数', '综合债券指数'],
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['7月', '8月', '9月', '10月', '11月', '12月'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '国债指数',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#003399' 
+                        },
+                        itemStyle: { 
+                            color: '#003399' 
+                        },
+                        data: [223.8, 224.1, 224.3, 224.4, 224.5, 224.53]
+                    },
+                    {
+                        name: '企业债指数',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#28a745' 
+                        },
+                        itemStyle: { 
+                            color: '#28a745' 
+                        },
+                        data: [302.2, 302.5, 302.7, 302.8, 302.9, 302.92]
+                    },
+                    {
+                        name: '综合债券指数',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#ffc107' 
+                        },
+                        itemStyle: { 
+                            color: '#ffc107' 
+                        },
+                        data: [215.8, 216.3, 216.8, 217.2, 217.5, 217.8]
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '15%',
+                    bottom: '15%'
+                }
+            };
+            
+            chart.setOption(option);
+        }
+        
+        // 初始化利率图表（SHIBOR & LPR）
+        function initInterestRateChart() {
+            const chart = echarts.init(document.getElementById('interest-rate-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        label: {
+                            backgroundColor: '#6a7985'
+                        }
+                    }
+                },
+                legend: {
+                    top: 5,
+                    data: ['SHIBOR(3个月)', 'LPR(1年期)', 'LPR(5年期)'],
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['7月', '8月', '9月', '10月', '11月', '12月'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10,
+                        formatter: '{value}%'
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: 'SHIBOR(3个月)',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#003399' 
+                        },
+                        itemStyle: { 
+                            color: '#003399' 
+                        },
+                        data: [2.05, 2.00, 1.95, 1.90, 1.88, 1.85]
+                    },
+                    {
+                        name: 'LPR(1年期)',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#28a745' 
+                        },
+                        itemStyle: { 
+                            color: '#28a745' 
+                        },
+                        data: [3.55, 3.55, 3.55, 3.55, 3.55, 3.55]
+                    },
+                    {
+                        name: 'LPR(5年期)',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#dc3545' 
+                        },
+                        itemStyle: { 
+                            color: '#dc3545' 
+                        },
+                        data: [4.20, 4.20, 4.20, 4.20, 4.20, 4.20]
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '15%',
+                    bottom: '15%'
+                }
+            };
+            
+            chart.setOption(option);
+        }
+        
+        // 初始化国内大宗商品价格图表
+        function initDomesticCommodityChart() {
+            const chart = echarts.init(document.getElementById('domestic-commodity-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const value = params[0].value;
+                        return `${params[0].name}: ${value.toLocaleString()} 元/吨`;
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['7月', '8月', '9月', '10月', '11月', '12月'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10,
+                        formatter: '{value}'
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '钢铁主力合约',
+                        type: 'line',
+                        data: [3850, 3920, 4010, 4080, 4120, 4150],
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#003399' 
+                        },
+                        itemStyle: { 
+                            color: '#003399' 
+                        },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(0, 51, 153, 0.2)' },
+                                { offset: 1, color: 'rgba(0, 51, 153, 0.05)' }
+                            ])
+                        }
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '10%',
+                    bottom: '15%'
+                }
+            };
+            
+            chart.setOption(option);
+        }
+        
+        // 更新国内大宗商品图表（根据选择的材料）
+        function updateDomesticCommodityChart(material) {
+            const chart = echarts.getInstanceByDom(document.getElementById('domestic-commodity-chart'));
+            
+            if (!chart) return;
+            
+            let data, color, yMin, yMax, unit = '元/吨';
+            
+            // 根据选择的材料显示不同的数据
+            if (material === 'steel') {
+                data = [3850, 3920, 4010, 4080, 4120, 4150];
+                color = '#003399';
+                yMin = 3800;
+                yMax = 4200;
+                
+                // 更新环比显示
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-up"></i>1.45%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            } else if (material === 'lithium') {
+                data = [125000, 120000, 115000, 110000, 108000, 105000];
+                color = '#28a745';
+                yMin = 100000;
+                yMax = 130000;
+                unit = '元/吨';
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-down"></i>2.78%';
+                    changeIndicator.className = 'chart-change change-negative';
+                }
+            } else if (material === 'aluminum') {
+                data = [18500, 18700, 18900, 19000, 19100, 19200];
+                color = '#dc3545';
+                yMin = 18000;
+                yMax = 19500;
+                unit = '元/吨';
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-up"></i>0.52%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            } else if (material === 'copper') {
+                data = [68500, 68200, 68000, 67800, 68600, 68500];
+                color = '#ffc107';
+                yMin = 67000;
+                yMax = 69000;
+                unit = '元/吨';
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-up"></i>0.88%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            }
+            
+            // 更新单位显示
+            const unitElement = document.querySelector('.chart-card .unit');
+            if (unitElement) {
+                unitElement.textContent = unit;
+            }
+            
+            const option = {
+                series: [{
+                    data: data,
+                    lineStyle: { 
+                        color: color 
+                    },
+                    itemStyle: { 
+                        color: color 
+                    },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: color.replace(')', ', 0.2)').replace('rgb', 'rgba') },
+                            { offset: 1, color: color.replace(')', ', 0.05)').replace('rgb', 'rgba') }
+                        ])
+                    }
+                }],
+                yAxis: {
+                    min: yMin,
+                    max: yMax
+                }
+            };
+            
+            chart.setOption(option);
+        }
+        
+        // 初始化国际大宗商品价格图表
+        function initInternationalCommodityChart() {
+            const chart = echarts.init(document.getElementById('international-commodity-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const value = params[0].value;
+                        return `${params[0].name}: ${value} 美元/桶`;
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['7月', '8月', '9月', '10月', '11月', '12月'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10,
+                        formatter: '{value}'
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '原油价格',
+                        type: 'line',
+                        data: [80.5, 82.3, 84.1, 83.8, 85.0, 85.2],
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#28a745' 
+                        },
+                        itemStyle: { 
+                            color: '#28a745' 
+                        },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(40, 167, 69, 0.2)' },
+                                { offset: 1, color: 'rgba(40, 167, 69, 0.05)' }
+                            ])
+                        }
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '10%',
+                    bottom: '15%'
+                }
+            };
+            
+            chart.setOption(option);
+        }
+        
+        // 更新国际大宗商品图表（根据选择的商品）
+        function updateInternationalCommodityChart(commodity) {
+            const chart = echarts.getInstanceByDom(document.getElementById('international-commodity-chart'));
+            
+            if (!chart) return;
+            
+            let data, color, yMin, yMax, unit = '美元/桶';
+            
+            // 根据选择的商品显示不同的数据
+            if (commodity === 'oil') {
+                data = [80.5, 82.3, 84.1, 83.8, 85.0, 85.2];
+                color = '#28a745';
+                yMin = 78;
+                yMax = 87;
+                unit = '美元/桶';
+                
+                // 更新环比显示
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-up"></i>2.1%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            } else if (commodity === 'gold') {
+                data = [1950, 1965, 1978, 1982, 1990, 1985];
+                color = '#ffc107';
+                yMin = 1900;
+                yMax = 2050;
+                unit = '美元/盎司';
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-up"></i>1.8%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            } else if (commodity === 'copper') {
+                data = [3.85, 3.90, 3.95, 3.92, 3.98, 3.96];
+                color = '#dc3545';
+                yMin = 3.7;
+                yMax = 4.1;
+                unit = '美元/磅';
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-up"></i>2.9%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            } else if (commodity === 'iron') {
+                data = [125, 128, 130, 132, 131, 129];
+                color = '#6f42c1';
+                yMin = 120;
+                yMax = 135;
+                unit = '美元/吨';
+                
+                const changeIndicator = document.querySelector('.chart-card .chart-change');
+                if (changeIndicator) {
+                    changeIndicator.innerHTML = '<i class="fas fa-arrow-up"></i>3.2%';
+                    changeIndicator.className = 'chart-change change-positive';
+                }
+            }
+            
+            // 更新单位显示
+            const unitElement = document.querySelector('.chart-card .unit');
+            if (unitElement) {
+                unitElement.textContent = unit;
+            }
+            
+            // 更新数值显示
+            const valueElement = document.querySelector('.chart-card .value');
+            if (valueElement) {
+                valueElement.textContent = data[data.length - 1];
+            }
+            
+            const option = {
+                series: [{
+                    data: data,
+                    lineStyle: { 
+                        color: color 
+                    },
+                    itemStyle: { 
+                        color: color 
+                    },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: color.replace(')', ', 0.2)').replace('rgb', 'rgba') },
+                            { offset: 1, color: color.replace(')', ', 0.05)').replace('rgb', 'rgba') }
+                        ])
+                    }
+                }],
+                yAxis: {
+                    min: yMin,
+                    max: yMax
+                }
+            };
+            
+            chart.setOption(option);
+        }
+    </script>
+</body>
+</html>

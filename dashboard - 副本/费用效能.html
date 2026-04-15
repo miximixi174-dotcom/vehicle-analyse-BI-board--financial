@@ -1,0 +1,2907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉利汽车 - 费用效能分析看板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --geely-blue: #003399;
+            --geely-light-blue: #0055cc;
+            --geely-accent: #00a0e9;
+            --geely-dark: #001a4d;
+            --mbb-gray-1: #f8f9fa;
+            --mbb-gray-2: #e9ecef;
+            --mbb-gray-3: #dee2e6;
+            --mbb-gray-4: #6c757d;
+            --mbb-gray-5: #495057;
+            --mbb-gray-6: #212529;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --module-1-color: #003399;
+            --module-2-color: #28a745;
+            --module-3-color: #ff6b35;
+            --module-4-color: #6f42c1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: var(--mbb-gray-6);
+            min-height: 100vh;
+            letter-spacing: 0.01em;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 16:9容器 */
+        .dashboard-16x9 {
+            width: 100vw;
+            height: 56.25vw; /* 16:9比例：高度 = 宽度 * 9/16 = 宽度 * 0.5625 */
+            max-height: 100vh;
+            max-width: 177.78vh; /* 16:9比例：最大宽度 = 高度 * 16/9 = 高度 * 1.7778 */
+            margin: 0 auto;
+            position: relative;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 顶部标题栏 */
+        .top-header {
+            background: linear-gradient(135deg, var(--geely-dark) 0%, var(--geely-blue) 100%);
+            color: white;
+            padding: 1.2vh 1.5vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 51, 153, 0.2);
+            position: relative;
+            z-index: 10;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            height: 10%;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.8vw;
+        }
+        
+        .logo-icon {
+            width: 3.5vh;
+            height: 3.5vh;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--geely-blue);
+            font-size: 1.5vh;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-text h1 {
+            font-size: 2.2vh;
+            font-weight: 700;
+            margin-bottom: 0.3vh;
+            letter-spacing: 0.03em;
+        }
+        
+        .logo-text p {
+            font-size: 1.2vh;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .header-title {
+            border-left: 2px solid rgba(255, 255, 255, 0.3);
+            padding-left: 1.2vw;
+        }
+        
+        .header-title h2 {
+            font-size: 1.8vh;
+            font-weight: 600;
+            margin-bottom: 0.3vh;
+        }
+        
+        .header-title p {
+            font-size: 1.1vh;
+            opacity: 0.85;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+        }
+        
+        .date-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.6vh 1vw;
+            border-radius: 6px;
+            font-size: 1.1vh;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+        
+        .date-info i {
+            font-size: 1.2vh;
+        }
+        
+        /* 主仪表板容器 - 2x2布局 */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            height: 90%;
+            padding: 1.2vh 1.2vw;
+            gap: 1.2vh 1.2vw;
+            background-color: #f0f2f5;
+            overflow: hidden;
+            flex: 1;
+        }
+        
+        /* 列样式 */
+        .column {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--mbb-gray-2);
+            overflow: hidden;
+            min-width: 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .column:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .column-header {
+            padding: 1.5vh 1.5vw 1vh;
+            border-bottom: 1px solid var(--mbb-gray-2);
+            flex-shrink: 0;
+            background-color: rgba(0, 0, 0, 0.01);
+            position: relative;
+        }
+        
+        .column-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.6vh;
+        }
+        
+        .module-badge {
+            width: 2.5vh;
+            height: 2.5vh;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.8vw;
+            color: white;
+            font-size: 1.2vh;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+        
+        .module-1 .module-badge {
+            background: linear-gradient(135deg, var(--module-1-color) 0%, #0055cc 100%);
+        }
+        
+        .module-2 .module-badge {
+            background: linear-gradient(135deg, var(--module-2-color) 0%, #20c997 100%);
+        }
+        
+        .module-3 .module-badge {
+            background: linear-gradient(135deg, var(--module-3-color) 0%, #ff9e6d 100%);
+        }
+        
+        .column-header h2 {
+            font-size: 1.5vh;
+            font-weight: 700;
+            color: var(--mbb-gray-6);
+        }
+        
+        .column-header p {
+            font-size: 1vh;
+            color: var(--mbb-gray-4);
+            line-height: 1.4;
+        }
+        
+        /* 模块切换下拉框 */
+        .module-selector {
+            position: absolute;
+            top: 1.2vh;
+            right: 1.2vw;
+            z-index: 10;
+        }
+        
+        .module-select {
+            background-color: white;
+            border: 1px solid var(--mbb-gray-3);
+            border-radius: 4px;
+            padding: 0.5vh 0.8vw;
+            font-size: 1vh;
+            color: var(--mbb-gray-6);
+            cursor: pointer;
+            outline: none;
+            min-width: 8vw;
+            transition: all 0.2s;
+        }
+        
+        .module-select:hover {
+            border-color: var(--geely-blue);
+        }
+        
+        .module-select:focus {
+            border-color: var(--geely-blue);
+            box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.1);
+        }
+        
+        .column-content {
+            flex: 1;
+            overflow: hidden;
+            padding: 1.2vh 1.5vw;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 图表卡片 */
+        .chart-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5vh 1.5vw;
+            border: 1px solid var(--mbb-gray-2);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            flex-shrink: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.2vh;
+        }
+        
+        .chart-title h3 {
+            font-size: 1.4vh;
+            font-weight: 600;
+            color: var(--mbb-gray-6);
+            margin-bottom: 0.3vh;
+        }
+        
+        .chart-subtitle {
+            font-size: 1vh;
+            color: var(--mbb-gray-4);
+            font-weight: 500;
+        }
+        
+        .chart-status {
+            display: flex;
+            align-items: center;
+            gap: 0.4vw;
+        }
+        
+        .status-light {
+            width: 0.6vh;
+            height: 0.6vh;
+            border-radius: 50%;
+        }
+        
+        .status-light.green {
+            background-color: var(--success-green);
+            box-shadow: 0 0 6px rgba(40, 167, 69, 0.4);
+        }
+        
+        .status-light.yellow {
+            background-color: var(--warning-yellow);
+            box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
+        }
+        
+        .status-light.red {
+            background-color: var(--danger-red);
+            box-shadow: 0 0 6px rgba(220, 53, 69, 0.4);
+        }
+        
+        .status-text {
+            font-size: 0.9vh;
+            font-weight: 600;
+            color: var(--mbb-gray-5);
+        }
+        
+        .chart-value {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 1.2vh;
+        }
+        
+        .chart-value .value {
+            font-size: 2.2vh;
+            font-weight: 700;
+            color: var(--mbb-gray-6);
+        }
+        
+        .chart-value .unit {
+            font-size: 1vh;
+            font-weight: 500;
+            color: var(--mbb-gray-4);
+            margin-left: 0.4vw;
+        }
+        
+        .chart-change {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.9vh;
+            font-weight: 600;
+            padding: 0.2vh 0.6vw;
+            border-radius: 12px;
+            margin-left: 0.8vw;
+        }
+        
+        .change-positive {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-green);
+        }
+        
+        .change-negative {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-red);
+        }
+        
+        .change-neutral {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: var(--mbb-gray-4);
+        }
+        
+        .chart-container {
+            height: 18vh;
+            width: 100%;
+            flex: 1;
+        }
+        
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9vh;
+        }
+        
+        .data-table th {
+            background-color: rgba(0, 0, 0, 0.02);
+            color: var(--mbb-gray-5);
+            font-weight: 600;
+            padding: 0.8vh 0.6vw;
+            text-align: left;
+            border-bottom: 1px solid var(--mbb-gray-2);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .data-table td {
+            padding: 0.8vh 0.6vw;
+            border-bottom: 1px solid var(--mbb-gray-2);
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+        
+        .positive {
+            color: var(--success-green);
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: var(--danger-red);
+            font-weight: 600;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 0.8vh;
+            height: 0.8vh;
+            border-radius: 50%;
+            margin-right: 0.6vw;
+        }
+        
+        .status-on-track {
+            background-color: var(--success-green);
+        }
+        
+        .status-warning {
+            background-color: var(--warning-yellow);
+        }
+        
+        .status-behind {
+            background-color: var(--danger-red);
+        }
+        
+        /* 悬浮窗样式 - 16:9比例 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 2vh;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 1600px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 16/9;
+        }
+        
+        .modal-header {
+            padding: 2vh 2.5vw;
+            border-bottom: 1px solid var(--mbb-gray-2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--geely-blue);
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .modal-header h3 {
+            font-size: 2vh;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.8vw;
+        }
+        
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 3vh;
+            height: 3vh;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.8vh;
+            transition: background-color 0.2s;
+        }
+        
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .modal-body {
+            padding: 2vh 2.5vw;
+            overflow: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 16:9布局的图表容器 - 用于模块二的特殊布局 */
+        .module2-modal-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2vh;
+            height: 100%;
+        }
+        
+        .module2-charts-row {
+            flex: 1;
+            display: flex;
+            gap: 1.5vw;
+            min-height: 25vh;
+        }
+        
+        .module2-chart-left, .module2-chart-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--mbb-gray-1);
+            border-radius: 8px;
+            border: 1px solid var(--mbb-gray-2);
+            overflow: hidden;
+        }
+        
+        .module2-chart-header {
+            padding: 1.5vh 1.5vw;
+            background-color: white;
+            border-bottom: 1px solid var(--mbb-gray-2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .module2-chart-title {
+            font-size: 1.6vh;
+            font-weight: 600;
+            color: var(--geely-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.8vw;
+        }
+        
+        .module2-chart-container {
+            flex: 1;
+            padding: 1.5vh;
+            min-height: 0;
+        }
+        
+        /* 单台趋势图表的品牌筛选器 */
+        .filter-section {
+            margin-bottom: 1.2vh;
+            padding: 0.8vh 0;
+        }
+        
+        .brand-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8vw;
+            align-items: center;
+        }
+        
+        .filter-label {
+            font-size: 1vh;
+            font-weight: 600;
+            color: var(--mbb-gray-6);
+            white-space: nowrap;
+        }
+        
+        .brand-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2vw;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4vw;
+        }
+        
+        .checkbox-item input {
+            accent-color: var(--geely-blue);
+        }
+        
+        .checkbox-item label {
+            font-size: 1vh;
+            color: var(--mbb-gray-6);
+            cursor: pointer;
+        }
+        
+        .module2-table-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--mbb-gray-1);
+            border-radius: 8px;
+            border: 1px solid var(--mbb-gray-2);
+            overflow: hidden;
+            min-height: 25vh;
+            max-height: 30vh;
+        }
+        
+        .module2-table-header {
+            padding: 1.5vh 1.5vw;
+            background-color: white;
+            border-bottom: 1px solid var(--mbb-gray-2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .module2-table-title {
+            font-size: 1.6vh;
+            font-weight: 600;
+            color: var(--geely-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.8vw;
+        }
+        
+        .module2-table-content {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+        
+        /* 广宣费用表格样式 */
+        .campaign-table-container {
+            max-height: 25vh;
+            overflow-y: auto;
+            margin-top: 0.8vh;
+            border: 1px solid var(--mbb-gray-2);
+            border-radius: 4px;
+        }
+        
+        /* 自定义滚动条 */
+        .module2-table-content::-webkit-scrollbar {
+            width: 0.4vw;
+        }
+        
+        .module2-table-content::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 8px;
+        }
+        
+        .module2-table-content::-webkit-scrollbar-thumb {
+            background: var(--mbb-gray-3);
+            border-radius: 8px;
+        }
+        
+        .modal-body::-webkit-scrollbar {
+            width: 0.6vw;
+        }
+        
+        .modal-body::-webkit-scrollbar-track {
+            background: var(--mbb-gray-1);
+            border-radius: 8px;
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--mbb-gray-3);
+            border-radius: 8px;
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--mbb-gray-4);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .dashboard-16x9 {
+                width: 100vw;
+                height: 56.25vw;
+                max-height: 100vh;
+                max-width: none;
+            }
+            
+            .dashboard-container {
+                padding: 1vh 1vw;
+                gap: 1vh 1vw;
+            }
+            
+            .column-header {
+                padding: 1.2vh 1.2vw 0.8vh;
+            }
+            
+            .column-content {
+                padding: 1vh 1.2vw;
+            }
+            
+            .chart-card {
+                padding: 1.2vh 1.2vw;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, 1fr);
+            }
+            
+            .top-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1vh;
+                padding: 1vh 1vw;
+                height: auto;
+            }
+            
+            .header-left, .header-right {
+                width: 100%;
+            }
+            
+            .module-selector {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-top: 0.8vh;
+                align-self: flex-end;
+            }
+            
+            .module2-charts-row {
+                flex-direction: column;
+            }
+            
+            .module2-chart-left, .module2-chart-right {
+                min-height: 20vh;
+            }
+            
+            .dashboard-16x9 {
+                height: auto;
+                max-height: 100vh;
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 16:9容器 -->
+    <div class="dashboard-16x9">
+        <!-- 顶部标题栏 -->
+        <div class="top-header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>吉利汽车</h1>
+                        <p>Geely Auto Cost Efficiency Dashboard</p>
+                    </div>
+                </div>
+                <div class="header-title">
+                    <h2>费用效能分析看板</h2>
+                    <p>实时监控费用效能，优化资源配置，提升运营效率</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="date-info">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>数据更新时间: 2025-01-15 09:30</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主仪表板 - 2x2布局 -->
+        <div class="dashboard-container">
+            <!-- 模块一：期间费用监控 -->
+            <div class="column module-1" id="module-1" data-module="1">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="module-badge">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <h2>模块一：期间费用监控</h2>
+                    </div>
+                    <p>核心费用率趋势，营销效率分析，预算执行监控</p>
+                    <div class="module-selector">
+                        <select class="module-select" id="module1-select">
+                            <option value="1">期间费用率构成分析</option>
+                            <option value="2">营销效率分析</option>
+                            <option value="3">预算执行监控</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="column-content">
+                    <!-- 期间费用率构成分析图表 -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <h3 id="module1-title">期间费用率构成分析</h3>
+                                <div class="chart-subtitle" id="module1-subtitle">期间费用率构成及各分项影响分析</div>
+                            </div>
+                            <div class="chart-status">
+                                <div class="status-light green"></div>
+                                <div class="status-text">趋势稳定</div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-value">
+                            <span class="value">12.4</span>
+                            <span class="unit">%</span>
+                            <span class="chart-change change-positive">
+                                <i class="fas fa-arrow-down"></i>0.8%
+                            </span>
+                        </div>
+                        
+                        <div class="chart-container" id="module1-chart"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模块二：制造费用效率监控 -->
+            <div class="column module-2" id="module-2" data-module="2">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="module-badge">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                        <h2>模块二：制造费用效率监控</h2>
+                    </div>
+                    <p>单台趋势分析，制造费用预算执行率，各基地制造费用对比</p>
+                    <div class="module-selector">
+                        <select class="module-select" id="module2-select">
+                            <option value="1">单台趋势（元/台）</option>
+                            <option value="2">制造费用预算执行率</option>
+                            <option value="3">各基地制造费用对比</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="column-content">
+                    <!-- 单台趋势图表 -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <h3 id="module2-title">单台趋势（元/台）</h3>
+                                <div class="chart-subtitle" id="module2-subtitle">各品牌经营体单台制造费用月度趋势对比</div>
+                            </div>
+                            <div class="chart-status">
+                                <div class="status-light green"></div>
+                                <div class="status-text">趋势稳定</div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-value">
+                            <span class="value">2,450</span>
+                            <span class="unit">元/台</span>
+                            <span class="chart-change change-positive">
+                                <i class="fas fa-arrow-down"></i>1.2%
+                            </span>
+                        </div>
+                        
+                        <div class="chart-container" id="module2-chart"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模块三：营销效率与广宣专项评估 -->
+            <div class="column module-3" id="module-3" data-module="3">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="module-badge">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <h2>模块三：营销效率与广宣专项评估</h2>
+                    </div>
+                    <p>营销费用预算完成率，营销活动效果，广宣费用TOP10</p>
+                    <div class="module-selector">
+                        <select class="module-select" id="module3-select">
+                            <option value="1">营销费用预算完成率</option>
+                            <option value="2">营销活动效果分析</option>
+                            <option value="3">广宣费用TOP10项目</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="column-content">
+                    <!-- 营销费用预算完成率 -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <h3 id="module3-title">营销费用预算完成率</h3>
+                                <div class="chart-subtitle" id="module3-subtitle">双轴组合图: 柱状-营销费用投入; 折线-预算完成率; 辅助线-行业基准</div>
+                            </div>
+                            <div class="chart-status">
+                                <div class="status-light green"></div>
+                                <div class="status-text">良好</div>
+                            </div>
+                        </div>
+                        <div class="chart-value">
+                            <span class="value">98.5</span>
+                            <span class="unit">%</span>
+                            <span class="chart-change change-positive">
+                                <i class="fas fa-arrow-up"></i>1.2%
+                            </span>
+                        </div>
+                        <div class="chart-container" id="module3-chart"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模块四：研发与数字化投资分析 -->
+            <div class="column module-1" id="module-4" data-module="4">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="module-badge">
+                            <i class="fas fa-search-dollar"></i>
+                        </div>
+                        <h2>模块四：研发与数字化投资分析</h2>
+                    </div>
+                    <p>研发投入分析，预算执行率趋势，技术领域分布</p>
+                    <div class="module-selector">
+                        <select class="module-select" id="module4-select">
+                            <option value="1">分品牌研发投入强度</option>
+                            <option value="2">研发预算执行率趋势</option>
+                            <option value="3">研发投入技术领域分布</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="column-content">
+                    <!-- 分品牌研发投入强度 -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <h3 id="module4-title">分品牌研发投入强度</h3>
+                                <div class="chart-subtitle" id="module4-subtitle">堆叠柱状图: 分品牌研发投入（其中数字化投资部分单独堆叠显示）</div>
+                            </div>
+                            <div class="chart-status">
+                                <div class="status-light green"></div>
+                                <div class="status-text">战略投入</div>
+                            </div>
+                        </div>
+                        <div class="chart-value">
+                            <span class="value">6.2</span>
+                            <span class="unit">%</span>
+                            <span class="chart-change change-positive">
+                                <i class="fas fa-arrow-up"></i>0.5%
+                            </span>
+                        </div>
+                        <div class="chart-container" id="module4-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 悬浮窗 - 模块二特殊布局 -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">
+                    <i class="fas fa-chart-line"></i>
+                    吉智分析跳转
+                </h3>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="module2-modal-container">
+                    <!-- 上部分：两个并排图表 -->
+                    <div class="module2-charts-row">
+                        <div class="module2-chart-left">
+                            <div class="module2-chart-header">
+                                <div class="module2-chart-title">
+                                    <i>📈</i> 单台趋势（元/台）
+                                </div>
+                            </div>
+                            <div class="module2-chart-container">
+                                <div class="filter-section">
+                                    <div class="brand-filter">
+                                        <div class="filter-label">品牌经营体（请选择）:</div>
+                                        <div class="brand-checkboxes">
+                                            <div class="checkbox-item">
+                                                <input type="checkbox" id="modal-brand1" checked>
+                                                <label for="modal-brand1">中国重制造</label>
+                                            </div>
+                                            <div class="checkbox-item">
+                                                <input type="checkbox" id="modal-brand2" checked>
+                                                <label for="modal-brand2">银河制造</label>
+                                            </div>
+                                            <div class="checkbox-item">
+                                                <input type="checkbox" id="modal-brand3">
+                                                <label for="modal-brand3">领克制造</label>
+                                            </div>
+                                            <div class="checkbox-item">
+                                                <input type="checkbox" id="modal-brand4">
+                                                <label for="modal-brand4">锐泰制造</label>
+                                            </div>
+                                            <div class="checkbox-item">
+                                                <input type="checkbox" id="modal-brand5" checked>
+                                                <label for="modal-brand5">富达制造</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="height: calc(100% - 5vh); width: 100%; position: relative;">
+                                    <canvas id="modal-trendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="module2-chart-right">
+                            <div class="module2-chart-header">
+                                <div class="module2-chart-title">
+                                    <i>🏭</i> 各基地产量（万台）及单台费用（元/台）
+                                </div>
+                            </div>
+                            <div class="module2-chart-container">
+                                <div style="height: 100%; width: 100%; position: relative;">
+                                    <canvas id="modal-productionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 下部分：表格 -->
+                    <div class="module2-table-container">
+                        <div class="module2-table-header">
+                            <div class="module2-table-title">
+                                <i>📊</i> 产品、单台、产能利用率
+                            </div>
+                        </div>
+                        <div class="module2-table-content">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>品牌经营体</th>
+                                        <th>基地</th>
+                                        <th>费用类别</th>
+                                        <th>预算产量</th>
+                                        <th>预算单台</th>
+                                        <th>实际产量</th>
+                                        <th>实际单台</th>
+                                        <th>产量完成率</th>
+                                        <th>预算节约率</th>
+                                        <th>产能利用率</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal-table-body">
+                                    <!-- 数据行将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentModule = 1;
+        let currentChart = 1;
+        let modalTrendChart = null;
+        let modalProductionChart = null;
+        
+        // 模块数据定义
+        const moduleData = {
+            1: {
+                title: "模块一：期间费用监控",
+                charts: {
+                    1: {
+                        title: "期间费用率构成分析",
+                        subtitle: "期间费用率构成及各分项影响分析",
+                        type: "echarts",
+                        initFunction: initExpenseCompositionChart
+                    },
+                    2: {
+                        title: "营销效率分析",
+                        subtitle: "营销费用ROI与单位费用收入",
+                        type: "echarts",
+                        initFunction: initMarketingEfficiencyChart
+                    },
+                    3: {
+                        title: "预算执行监控",
+                        subtitle: "关键费用预算执行率",
+                        type: "echarts",
+                        initFunction: initBudgetExecutionChart
+                    }
+                }
+            },
+            2: {
+                title: "模块二：制造费用效率监控",
+                charts: {
+                    1: {
+                        title: "单台趋势（元/台）",
+                        subtitle: "各品牌经营体单台制造费用月度趋势对比",
+                        type: "chartjs",
+                        initFunction: initTrendChart
+                    },
+                    2: {
+                        title: "制造费用预算执行率",
+                        subtitle: "各基地制造费用预算执行情况",
+                        type: "echarts",
+                        initFunction: initManufacturingBudgetChart
+                    },
+                    3: {
+                        title: "各基地制造费用对比",
+                        subtitle: "分基地制造费用构成分析",
+                        type: "echarts",
+                        initFunction: initManufacturingCostComparison
+                    }
+                }
+            },
+            3: {
+                title: "模块三：营销效率与广宣专项评估",
+                charts: {
+                    1: {
+                        title: "营销费用预算完成率",
+                        subtitle: "双轴组合图: 柱状-营销费用投入; 折线-预算完成率; 辅助线-行业基准",
+                        type: "echarts",
+                        initFunction: initMarketingBudgetCompletionChart
+                    },
+                    2: {
+                        title: "营销活动效果分析",
+                        subtitle: "营销活动名称、预算金额、实际金额、对应车型投入分析",
+                        type: "echarts",
+                        initFunction: initCampaignAnalysisChart
+                    },
+                    3: {
+                        title: "广宣费用TOP10项目",
+                        subtitle: "支持查看项目明细与效果报告",
+                        type: "table",
+                        initFunction: initCampaignTop10Table
+                    }
+                }
+            },
+            4: {
+                title: "模块四：研发与数字化投资分析",
+                charts: {
+                    1: {
+                        title: "分品牌研发投入强度",
+                        subtitle: "堆叠柱状图: 分品牌研发投入（其中数字化投资部分单独堆叠显示）",
+                        type: "echarts",
+                        initFunction: initRDInvestmentChart
+                    },
+                    2: {
+                        title: "研发预算执行率趋势",
+                        subtitle: "折线图: 预算执行率趋势，数字化投资完成率",
+                        type: "echarts",
+                        initFunction: initBudgetExecutionChart2
+                    },
+                    3: {
+                        title: "研发投入技术领域分布",
+                        subtitle: "基础研发/数字化/车型开发等技术领域投入分布",
+                        type: "echarts",
+                        initFunction: initTechAreaChart
+                    }
+                }
+            }
+        };
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化所有模块的第一个图表
+            initModuleChart(1, 1);
+            initModuleChart(2, 1);
+            initModuleChart(3, 1);
+            initModuleChart(4, 1);
+            
+            // 绑定模块点击事件
+            document.querySelectorAll('.column').forEach(module => {
+                module.addEventListener('click', function(e) {
+                    // 防止下拉框点击触发模块点击
+                    if (e.target.classList.contains('module-select') || 
+                        e.target.closest('.module-selector')) {
+                        return;
+                    }
+                    
+                    const moduleId = parseInt(this.dataset.module);
+                    currentModule = moduleId;
+                    
+                    if (moduleId === 2) {
+                        // 模块二点击显示特殊的16:9悬浮窗
+                        showModule2Modal();
+                    }
+                });
+            });
+            
+            // 绑定下拉框切换事件
+            document.querySelectorAll('.module-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const moduleId = parseInt(this.id.replace('module', '').replace('-select', ''));
+                    const chartId = parseInt(this.value);
+                    
+                    initModuleChart(moduleId, chartId);
+                });
+            });
+            
+            // 绑定模态框关闭事件
+            document.getElementById('modal-close').addEventListener('click', closeModal);
+            
+            // 点击模态框外部关闭
+            document.getElementById('modal-overlay').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+            
+            // 窗口大小调整时重新调整图表
+            window.addEventListener('resize', function() {
+                setTimeout(() => {
+                    // 重新调整当前显示的模块图表
+                    const currentSelect = document.getElementById(`module${currentModule}-select`);
+                    if (currentSelect) {
+                        initModuleChart(currentModule, parseInt(currentSelect.value));
+                    }
+                    
+                    // 调整模块二悬浮窗图表大小
+                    if (modalTrendChart) {
+                        modalTrendChart.resize();
+                    }
+                    if (modalProductionChart) {
+                        modalProductionChart.resize();
+                    }
+                }, 100);
+            });
+        });
+        
+        // 初始化模块图表
+        function initModuleChart(moduleId, chartId) {
+            const module = moduleData[moduleId];
+            const chart = module.charts[chartId];
+            
+            if (!module || !chart) return;
+            
+            // 更新标题和副标题
+            document.getElementById(`module${moduleId}-title`).textContent = chart.title;
+            document.getElementById(`module${moduleId}-subtitle`).textContent = chart.subtitle;
+            
+            // 清空图表容器
+            const chartContainer = document.getElementById(`module${moduleId}-chart`);
+            chartContainer.innerHTML = '';
+            
+            // 创建canvas或div容器
+            let container;
+            if (chart.type === 'chartjs') {
+                container = document.createElement('canvas');
+                chartContainer.appendChild(container);
+            } else if (chart.type === 'echarts') {
+                container = document.createElement('div');
+                container.style.width = '100%';
+                container.style.height = '100%';
+                chartContainer.appendChild(container);
+            } else if (chart.type === 'table') {
+                container = document.createElement('div');
+                container.style.width = '100%';
+                container.style.height = '100%';
+                container.style.overflow = 'auto';
+                chartContainer.appendChild(container);
+            }
+            
+            // 初始化图表
+            if (chart.initFunction) {
+                chart.initFunction(container);
+            }
+        }
+        
+        // 显示模块二特殊悬浮窗
+        function showModule2Modal() {
+            // 更新模态框标题
+            document.getElementById('modal-title').innerHTML = '<i class="fas fa-chart-line"></i> 吉智分析跳转';
+            
+            // 显示模态框
+            document.getElementById('modal-overlay').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // 初始化模块二悬浮窗中的图表和表格
+            setTimeout(() => {
+                initModule2ModalContent();
+            }, 100);
+        }
+        
+        // 初始化模块二悬浮窗内容
+        function initModule2ModalContent() {
+            // 月份数据
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            
+            // 图表1: 单台趋势数据
+            const budgetData = [2200, 2250, 2300, 2350, 2400, 2450, 2500, 2550, 2600, 2650, 2700, 2750];
+            const actualData = [2100, 2180, 2320, 2400, 2380, 2500, 2550, 2600, 2620, 2680, 2720, 2800];
+            const problemData = [2300, 2350, 2280, 2400, 2450, 2420, 2550, 2500, 2650, 2700, 2680, 2750];
+            
+            // 图表2: 各基地数据
+            const bases = ['基地A', '基地B', '基地C', '基地D', '基地E', '基地F'];
+            const productionData = [45, 38, 52, 42, 48, 35];
+            const costPerUnitData = [2350, 2420, 2280, 2500, 2380, 2600];
+            const avgCostPerUnit = 2420;
+            
+            // 表格数据
+            const tableData = [
+                {
+                    brand: '中国重制造（王全心）',
+                    base: '华北基地',
+                    costType: '直接费用',
+                    budgetOutput: 500,
+                    budgetCostPerUnit: 2400,
+                    actualOutput: 520,
+                    actualCostPerUnit: 2350,
+                    completionRate: 104,
+                    savingRate: 2.1,
+                    capacityUtilization: 92
+                },
+                {
+                    brand: '银河制造（梁源发）',
+                    base: '华东基地',
+                    costType: '综合费用',
+                    budgetOutput: 450,
+                    budgetCostPerUnit: 2300,
+                    actualOutput: 430,
+                    actualCostPerUnit: 2320,
+                    completionRate: 95.6,
+                    savingRate: -0.9,
+                    capacityUtilization: 88
+                },
+                {
+                    brand: '领克制造（刘向阳）',
+                    base: '华南基地',
+                    costType: '直接费用',
+                    budgetOutput: 380,
+                    budgetCostPerUnit: 2500,
+                    actualOutput: 400,
+                    actualCostPerUnit: 2450,
+                    completionRate: 105.3,
+                    savingRate: 2.0,
+                    capacityUtilization: 85
+                },
+                {
+                    brand: '锐泰制造（赵春林）',
+                    base: '西南基地',
+                    costType: '间接费用',
+                    budgetOutput: 320,
+                    budgetCostPerUnit: 2600,
+                    actualOutput: 300,
+                    actualCostPerUnit: 2650,
+                    completionRate: 93.8,
+                    savingRate: -1.9,
+                    capacityUtilization: 78
+                },
+                {
+                    brand: '富达制造（凌世权）',
+                    base: '东北基地',
+                    costType: '综合费用',
+                    budgetOutput: 420,
+                    budgetCostPerUnit: 2350,
+                    actualOutput: 410,
+                    actualCostPerUnit: 2300,
+                    completionRate: 97.6,
+                    savingRate: 2.1,
+                    capacityUtilization: 91
+                }
+            ];
+            
+            // 销毁之前的图表实例
+            if (modalTrendChart) {
+                modalTrendChart.destroy();
+            }
+            if (modalProductionChart) {
+                modalProductionChart.destroy();
+            }
+            
+            // 初始化图表1: 单台趋势
+            const trendCanvas = document.getElementById('modal-trendChart');
+            const trendCtx = trendCanvas.getContext('2d');
+            
+            modalTrendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: '预算',
+                            data: budgetData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: '实际',
+                            data: actualData,
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: '问题',
+                            data: problemData,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3,
+                            borderDash: [5, 5]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 12
+                                },
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y} 元/台`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            min: 2000,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    return value + ' 元';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: '单台费用 (元/台)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 初始化图表2: 各基地产量及单台费用
+            const productionCanvas = document.getElementById('modal-productionChart');
+            const productionCtx = productionCanvas.getContext('2d');
+            
+            modalProductionChart = new Chart(productionCtx, {
+                type: 'bar',
+                data: {
+                    labels: bases,
+                    datasets: [
+                        {
+                            label: '实际产量 (万台)',
+                            data: productionData,
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: '#2980b9',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '实际单台 (元/台)',
+                            data: costPerUnitData,
+                            type: 'line',
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: '平均单台',
+                            data: Array(bases.length).fill(avgCostPerUnit),
+                            type: 'line',
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 12
+                                },
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: '实际产量 (万台)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '单台费用 (元/台)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    return value + ' 元';
+                                }
+                            },
+                            min: 2200
+                        }
+                    }
+                }
+            });
+            
+            // 填充表格数据
+            const tableBody = document.getElementById('modal-table-body');
+            tableBody.innerHTML = '';
+            
+            tableData.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // 计算状态指示器
+                let statusClass = '';
+                if (item.completionRate >= 100 && item.savingRate >= 0) {
+                    statusClass = 'status-on-track';
+                } else if (item.completionRate >= 95) {
+                    statusClass = 'status-warning';
+                } else {
+                    statusClass = 'status-behind';
+                }
+                
+                row.innerHTML = `
+                    <td>
+                        <span class="status-indicator ${statusClass}"></span>
+                        ${item.brand}
+                    </td>
+                    <td>${item.base}</td>
+                    <td>${item.costType}</td>
+                    <td>${item.budgetOutput.toLocaleString()}</td>
+                    <td>${item.budgetCostPerUnit.toLocaleString()}</td>
+                    <td>${item.actualOutput.toLocaleString()}</td>
+                    <td>${item.actualCostPerUnit.toLocaleString()}</td>
+                    <td class="${item.completionRate >= 100 ? 'positive' : 'negative'}">
+                        ${item.completionRate}%
+                    </td>
+                    <td class="${item.savingRate >= 0 ? 'positive' : 'negative'}">
+                        ${item.savingRate >= 0 ? '+' : ''}${item.savingRate}%
+                    </td>
+                    <td>${item.capacityUtilization}%</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // 品牌筛选器交互效果
+            const brandCheckboxes = document.querySelectorAll('#modal-overlay .brand-checkboxes input');
+            brandCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // 模拟筛选效果 - 在实际应用中这里会更新图表数据
+                    const isChecked = this.checked;
+                    const brandName = this.nextElementSibling.textContent;
+                    
+                    console.log(`${brandName} ${isChecked ? '已选中' : '已取消'}`);
+                    
+                    // 这里可以添加实际筛选逻辑，更新图表数据
+                    // 为了示例，我们只是简单改变一下图表颜色
+                    if (brandName === '银河制造') {
+                        const dataset = modalTrendChart.data.datasets[1];
+                        dataset.borderColor = isChecked ? '#2ecc71' : '#bdc3c7';
+                        dataset.backgroundColor = isChecked ? 'rgba(46, 204, 113, 0.1)' : 'rgba(189, 195, 199, 0.1)';
+                        modalTrendChart.update();
+                    }
+                });
+            });
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            
+            // 销毁图表实例
+            if (modalTrendChart) {
+                modalTrendChart.destroy();
+                modalTrendChart = null;
+            }
+            if (modalProductionChart) {
+                modalProductionChart.destroy();
+                modalProductionChart = null;
+            }
+        }
+        
+        // ==================== 图表初始化函数 ====================
+        
+        // 初始化期间费用率构成分析图表（瀑布图）- 模块一
+        function initExpenseCompositionChart(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function(params) {
+                        let result = params[0].name + '<br/>';
+                        for (let i = 0; i < params.length; i++) {
+                            const item = params[i];
+                            let value = item.value;
+                            let sign = value > 0 ? '+' : '';
+                            result += `${item.marker} ${item.seriesName}: ${sign}${value}%<br/>`;
+                        }
+                        return result;
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '10%',
+                    top: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['期初费用率', '+销售费用', '+管理费用', '+研发费用', '+财务费用', '期末费用率'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '费用率(%)',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10,
+                        formatter: '{value}%'
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '费用率',
+                        type: 'bar',
+                        data: [
+                            13.2,
+                            { value: 7.2, itemStyle: { color: '#dc3545' } },
+                            { value: 4.1, itemStyle: { color: '#dc3545' } },
+                            { value: 6.2, itemStyle: { color: '#ffc107' } },
+                            { value: 1.5, itemStyle: { color: '#dc3545' } },
+                            12.4
+                        ],
+                        itemStyle: {
+                            color: '#003399'
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                if (params.dataIndex === 0 || params.dataIndex === 5) {
+                                    return params.value + '%';
+                                } else {
+                                    const sign = params.value > 0 ? '+' : '';
+                                    return sign + params.value + '%';
+                                }
+                            },
+                            fontSize: 10
+                        }
+                    }
+                ]
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化营销效率分析图表
+        function initMarketingEfficiencyChart(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                color: ['#0056A3', '#10B981', '#F59E0B'],
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: '#d1d9e6',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#333',
+                        fontSize: 11
+                    },
+                    formatter: function(params) {
+                        return `<div style="font-weight:600;margin-bottom:4px;font-size:12px">${params.data[3]}</div>
+                        <div style="font-size:11px">产品类型: <b>${params.seriesName}</b></div>
+                        <div style="font-size:11px">营销费用预算完成率: <b>${params.data[2]}%</b></div>
+                        <div style="font-size:11px">单位费用收入: <b>¥${params.data[1].toFixed(1)}万</b></div>
+                        <div style="font-size:11px">营销费用: <b>¥${params.data[0].toFixed(1)}万</b></div>`;
+                    }
+                },
+                legend: {
+                    data: ['轿车', 'SUV', '新能源'],
+                    top: 8,
+                    textStyle: {
+                        fontSize: 10
+                    },
+                    itemWidth: 10,
+                    itemHeight: 10,
+                    itemGap: 3
+                },
+                grid: {
+                    left: '8%',
+                    right: '8%',
+                    bottom: '12%',
+                    top: '22%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    name: '营销费用 (万元)',
+                    axisLine: {
+                        lineStyle: {
+                            color: '#d1d9e6'
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#f0f5fc',
+                            type: 'dashed'
+                        }
+                    },
+                    axisLabel: {
+                        fontSize: 10
+                    },
+                    nameTextStyle: {
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '单位费用收入 (万元)',
+                    axisLine: {
+                        lineStyle: {
+                            color: '#d1d9e6'
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#f0f5fc',
+                            type: 'dashed'
+                        }
+                    },
+                    axisLabel: {
+                        fontSize: 10
+                    },
+                    nameTextStyle: {
+                        fontSize: 10
+                    }
+                },
+                series: [
+                    {
+                        name: '轿车',
+                        type: 'scatter',
+                        symbolSize: function(item) {
+                            return Math.sqrt(item[2]) * 4;
+                        },
+                        data: [
+                            [120, 8.5, 95, '帝豪'],
+                            [180, 9.8, 98, '星瑞'],
+                            [150, 7.2, 92, '博瑞'],
+                            [90, 6.5, 88, '远景']
+                        ],
+                        itemStyle: {
+                            color: '#0056A3',
+                            opacity: 0.8
+                        }
+                    },
+                    {
+                        name: 'SUV',
+                        type: 'scatter',
+                        symbolSize: function(item) {
+                            return Math.sqrt(item[2]) * 4;
+                        },
+                        data: [
+                            [200, 10.2, 102, '博越'],
+                            [220, 11.5, 105, '星越L'],
+                            [180, 9.5, 97, '豪越'],
+                            [160, 8.8, 94, '缤越']
+                        ],
+                        itemStyle: {
+                            color: '#10B981',
+                            opacity: 0.8
+                        }
+                    },
+                    {
+                        name: '新能源',
+                        type: 'scatter',
+                        symbolSize: function(item) {
+                            return Math.sqrt(item[2]) * 4;
+                        },
+                        data: [
+                            [250, 12.5, 108, '极氪001'],
+                            [230, 11.8, 106, '几何A'],
+                            [210, 10.5, 102, '帝豪EV'],
+                            [190, 9.8, 99, '星越L Hi·P']
+                        ],
+                        itemStyle: {
+                            color: '#F59E0B',
+                            opacity: 0.8
+                        }
+                    }
+                ]
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化预算执行监控图表
+        function initBudgetExecutionChart(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                color: ['#0056A3'],
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: '#d1d9e6',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#333',
+                        fontSize: 11
+                    },
+                    formatter: '{a} <br/>{b}: {c}%'
+                },
+                grid: {
+                    left: '5%',
+                    right: '5%',
+                    bottom: '10%',
+                    top: '15%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['研发费用', '营销费用', '管理费用', '销售费用', '财务费用'],
+                    axisLine: {
+                        lineStyle: {
+                            color: '#d1d9e6'
+                        }
+                    },
+                    axisLabel: {
+                        fontSize: 10,
+                        interval: 0,
+                        rotate: 0
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '预算执行率 (%)',
+                    min: 0,
+                    max: 120,
+                    axisLine: {
+                        lineStyle: {
+                            color: '#d1d9e6'
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#f0f5fc',
+                            type: 'dashed'
+                        }
+                    },
+                    axisLabel: {
+                        fontSize: 10
+                    },
+                    nameTextStyle: {
+                        fontSize: 10
+                    }
+                },
+                series: [
+                    {
+                        name: '预算执行率',
+                        type: 'bar',
+                        data: [
+                            {value: 96, itemStyle: {color: '#10B981'}},
+                            {value: 102, itemStyle: {color: '#F59E0B'}},
+                            {value: 98, itemStyle: {color: '#10B981'}},
+                            {value: 105, itemStyle: {color: '#EF4444'}},
+                            {value: 92, itemStyle: {color: '#10B981'}}
+                        ],
+                        barWidth: '40%',
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: '{c}%',
+                            fontSize: 9
+                        }
+                    }
+                ]
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化单台趋势图表
+        function initTrendChart(container) {
+            // 月份数据
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            
+            // 图表数据
+            const budgetData = [2200, 2250, 2300, 2350, 2400, 2450, 2500, 2550, 2600, 2650, 2700, 2750];
+            const actualData = [2100, 2180, 2320, 2400, 2380, 2500, 2550, 2600, 2620, 2680, 2720, 2800];
+            const problemData = [2300, 2350, 2280, 2400, 2450, 2420, 2550, 2500, 2650, 2700, 2680, 2750];
+            
+            const canvas = container.tagName === 'CANVAS' ? container : document.createElement('canvas');
+            if (container.tagName !== 'CANVAS') {
+                container.appendChild(canvas);
+            }
+            
+            const trendChart = new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: '预算',
+                            data: budgetData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: '实际',
+                            data: actualData,
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: '问题',
+                            data: problemData,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            borderDash: [5, 5]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 11
+                                },
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y} 元/台`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            min: 2000,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                },
+                                callback: function(value) {
+                                    return value + ' 元';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: '单台费用 (元/台)',
+                                font: {
+                                    size: 11,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            return trendChart;
+        }
+        
+        // 初始化制造费用预算执行率图表 - 模块二新增图表1
+        function initManufacturingBudgetChart(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    top: 5,
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['华北基地', '华东基地', '华南基地', '西南基地', '东北基地'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '预算执行率(%)',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10,
+                        formatter: '{value}%'
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '预算执行率',
+                        type: 'bar',
+                        data: [
+                            {value: 105, itemStyle: {color: '#28a745'}},
+                            {value: 98, itemStyle: {color: '#ffc107'}},
+                            {value: 102, itemStyle: {color: '#28a745'}},
+                            {value: 94, itemStyle: {color: '#dc3545'}},
+                            {value: 101, itemStyle: {color: '#28a745'}}
+                        ],
+                        barWidth: '40%',
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: '{c}%',
+                            fontSize: 9
+                        }
+                    },
+                    {
+                        name: '目标线',
+                        type: 'line',
+                        data: [100, 100, 100, 100, 100],
+                        lineStyle: {
+                            type: 'dashed',
+                            color: '#6c757d',
+                            width: 1
+                        },
+                        symbol: 'none'
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '15%',
+                    bottom: '10%'
+                }
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化各基地制造费用对比图表 - 模块二新增图表2
+        function initManufacturingCostComparison(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    top: 5,
+                    data: ['直接材料', '直接人工', '制造费用', '能源消耗'],
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['华北基地', '华东基地', '华南基地', '西南基地', '东北基地'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '费用金额(万元)',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '直接材料',
+                        type: 'bar',
+                        stack: 'total',
+                        barWidth: '40%',
+                        data: [1200, 1100, 1300, 900, 1000],
+                        itemStyle: {
+                            color: '#003399'
+                        }
+                    },
+                    {
+                        name: '直接人工',
+                        type: 'bar',
+                        stack: 'total',
+                        barWidth: '40%',
+                        data: [450, 420, 480, 380, 400],
+                        itemStyle: {
+                            color: '#28a745'
+                        }
+                    },
+                    {
+                        name: '制造费用',
+                        type: 'bar',
+                        stack: 'total',
+                        barWidth: '40%',
+                        data: [300, 280, 320, 250, 270],
+                        itemStyle: {
+                            color: '#ff6b35'
+                        }
+                    },
+                    {
+                        name: '能源消耗',
+                        type: 'bar',
+                        stack: 'total',
+                        barWidth: '40%',
+                        data: [150, 130, 170, 120, 140],
+                        itemStyle: {
+                            color: '#6f42c1'
+                        }
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '15%',
+                    bottom: '10%'
+                }
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化营销费用预算完成率图表 - 替换原来的ROI图表
+        function initMarketingBudgetCompletionChart(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        crossStyle: {
+                            color: '#999'
+                        }
+                    }
+                },
+                legend: {
+                    top: 5,
+                    data: ['营销费用(百万)', '预算完成率', '目标线'],
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: ['2024Q1', '2024Q2', '2024Q3', '2024Q4', '2025Q1'],
+                        axisPointer: {
+                            type: 'shadow'
+                        },
+                        axisLine: { 
+                            lineStyle: { color: '#dee2e6' } 
+                        },
+                        axisLabel: { 
+                            color: '#495057',
+                            fontSize: 10
+                        }
+                    }
+                ],
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '营销费用(百万)',
+                        min: 0,
+                        max: 1200,
+                        axisLine: { 
+                            lineStyle: { color: '#dee2e6' } 
+                        },
+                        axisLabel: { 
+                            color: '#495057',
+                            fontSize: 10,
+                            formatter: '{value}'
+                        },
+                        splitLine: { 
+                            lineStyle: { 
+                                type: 'dashed', 
+                                color: '#e9ecef' 
+                            } 
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: '预算完成率(%)',
+                        min: 85,
+                        max: 115,
+                        axisLine: { 
+                            lineStyle: { color: '#dee2e6' } 
+                        },
+                        axisLabel: { 
+                            color: '#495057',
+                            fontSize: 10,
+                            formatter: '{value}%'
+                        },
+                        splitLine: { 
+                            show: false
+                        }
+                    }
+                ],
+                series: [
+                    {
+                        name: '营销费用(百万)',
+                        type: 'bar',
+                        barWidth: '40%',
+                        data: [980, 1020, 950, 1050, 1100],
+                        itemStyle: {
+                            color: '#003399'
+                        }
+                    },
+                    {
+                        name: '预算完成率',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: [95.2, 97.4, 98.5, 100.2, 98.5],
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#28a745' 
+                        },
+                        itemStyle: { 
+                            color: '#28a745' 
+                        }
+                    },
+                    {
+                        name: '目标线',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: [100, 100, 100, 100, 100],
+                        lineStyle: { 
+                            type: 'dashed',
+                            width: 1, 
+                            color: '#6c757d' 
+                        },
+                        itemStyle: { 
+                            color: '#6c757d' 
+                        }
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '15%',
+                    bottom: '10%'
+                }
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化营销活动效果分析图表
+        function initCampaignAnalysisChart(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    top: 5,
+                    data: ['预算金额', '实际金额', '预算完成率'],
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['北京车展', '线上发布会', '社交媒体', '电视广告', '户外广告'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '金额(百万)',
+                        axisLine: { 
+                            lineStyle: { color: '#dee2e6' } 
+                    },
+                        axisLabel: { 
+                            color: '#495057',
+                            fontSize: 10,
+                            formatter: '{value}'
+                        },
+                        splitLine: { 
+                            lineStyle: { 
+                                type: 'dashed', 
+                                color: '#e9ecef' 
+                            } 
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: '预算完成率(%)',
+                        axisLine: { 
+                            lineStyle: { color: '#dee2e6' } 
+                        },
+                        axisLabel: { 
+                            color: '#495057',
+                            fontSize: 10,
+                            formatter: '{value}%'
+                        },
+                        splitLine: { 
+                            show: false
+                        }
+                    }
+                ],
+                series: [
+                    {
+                        name: '预算金额',
+                        type: 'bar',
+                        barWidth: '30%',
+                        data: [8.5, 5.0, 2.8, 2.5, 1.5],
+                        itemStyle: {
+                            color: '#003399'
+                        }
+                    },
+                    {
+                        name: '实际金额',
+                        type: 'bar',
+                        barWidth: '30%',
+                        data: [8.2, 4.8, 2.5, 2.8, 1.6],
+                        itemStyle: {
+                            color: '#28a745'
+                        }
+                    },
+                    {
+                        name: '预算完成率',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: [96.5, 96.0, 89.3, 112.0, 106.7],
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#ff6b35' 
+                        },
+                        itemStyle: { 
+                            color: '#ff6b35' 
+                        }
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '15%',
+                    bottom: '10%'
+                }
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化广宣费用TOP10表格
+        function initCampaignTop10Table(container) {
+            // 广宣费用TOP10数据
+            const campaignData = [
+                { 
+                    name: '2025北京国际车展', 
+                    budget: 850, 
+                    actual: 820, 
+                    completionRate: 96.5,
+                    description: '吉利全系车型参展，重点展示新能源技术'
+                },
+                { 
+                    name: '银河E8线上发布会', 
+                    budget: 500, 
+                    actual: 480, 
+                    completionRate: 96.0,
+                    description: '纯电轿车银河E8全球首发'
+                },
+                { 
+                    name: '极氪001超充站网络宣传', 
+                    budget: 300, 
+                    actual: 320, 
+                    completionRate: 106.7,
+                    description: '极氪超充站网络全国推广活动'
+                },
+                { 
+                    name: '中国星系列社交媒体推广', 
+                    budget: 280, 
+                    actual: 250, 
+                    completionRate: 89.3,
+                    description: '中国星系列车型社交媒体矩阵推广'
+                },
+                { 
+                    name: '领克08全国试驾活动', 
+                    budget: 220, 
+                    actual: 210, 
+                    completionRate: 95.5,
+                    description: '领克08全国百城试驾体验活动'
+                },
+                { 
+                    name: '几何C海外市场推广', 
+                    budget: 180, 
+                    actual: 175, 
+                    completionRate: 97.2,
+                    description: '几何C欧洲市场上市推广活动'
+                },
+                { 
+                    name: '星越L Hi·P技术发布会', 
+                    budget: 150, 
+                    actual: 145, 
+                    completionRate: 96.7,
+                    description: '星越L Hi·P混动技术专项发布会'
+                },
+                { 
+                    name: '帝豪冠军版上市活动', 
+                    budget: 120, 
+                    actual: 125, 
+                    completionRate: 104.2,
+                    description: '帝豪冠军版全国上市发布会'
+                },
+                { 
+                    name: '博越L智能驾控体验', 
+                    budget: 100, 
+                    actual: 98, 
+                    completionRate: 98.0,
+                    description: '博越L智能驾控全国巡回体验'
+                },
+                { 
+                    name: '品牌日线上直播活动', 
+                    budget: 80, 
+                    actual: 85, 
+                    completionRate: 106.3,
+                    description: '吉利品牌日24小时线上直播'
+                }
+            ];
+            
+            // 创建表格
+            const table = document.createElement('table');
+            table.className = 'data-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>项目名称</th>
+                        <th>预算(万元)</th>
+                        <th>实际(万元)</th>
+                        <th>预算完成率</th>
+                        <th>项目描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${campaignData.map((item, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${item.budget.toLocaleString()}</td>
+                            <td>${item.actual.toLocaleString()}</td>
+                            <td class="${item.completionRate >= 100 ? 'positive' : (item.completionRate >= 95 ? '' : 'negative')}">
+                                ${item.completionRate}%
+                            </td>
+                            <td style="font-size:0.9vh;color:var(--mbb-gray-5)">${item.description}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            
+            container.innerHTML = `
+                <div style="margin-bottom: 0.8vh;">
+                    <h4 style="color: var(--geely-blue); font-size: 1.3vh; margin-bottom: 0.4vh;">广宣费用TOP10项目</h4>
+                    <p style="font-size: 1vh; color: var(--mbb-gray-5); margin-bottom: 0.8vh;">分析维度：预算、实际、预算完成率</p>
+                </div>
+                <div class="campaign-table-container">
+                    ${table.outerHTML}
+                </div>
+                <div style="margin-top: 0.8vh; font-size: 0.9vh; color: var(--mbb-gray-5);">
+                    <p>数据说明：预算完成率 = 实际金额 / 预算金额 × 100%</p>
+                </div>
+            `;
+        }
+        
+        // 初始化研发投入图表
+        function initRDInvestmentChart(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    top: 5,
+                    data: ['基础研发', '车型开发', '数字化投资'],
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['银河', '中国星', '极氪', '几何', '领克'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '投入金额(百万)',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '基础研发',
+                        type: 'bar',
+                        stack: 'total',
+                        barWidth: '40%',
+                        data: [120, 80, 150, 40, 100],
+                        itemStyle: {
+                            color: '#003399'
+                        }
+                    },
+                    {
+                        name: '车型开发',
+                        type: 'bar',
+                        stack: 'total',
+                        barWidth: '40%',
+                        data: [180, 120, 200, 60, 150],
+                        itemStyle: {
+                            color: '#28a745'
+                        }
+                    },
+                    {
+                        name: '数字化投资',
+                        type: 'bar',
+                        stack: 'total',
+                        barWidth: '40%',
+                        data: [50, 30, 80, 20, 40],
+                        itemStyle: {
+                            color: '#ff6b35'
+                        }
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '15%',
+                    bottom: '10%'
+                }
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化研发预算执行率趋势图表
+        function initBudgetExecutionChart2(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        label: {
+                            backgroundColor: '#6a7985'
+                        }
+                    }
+                },
+                legend: {
+                    top: 5,
+                    data: ['研发预算执行率', '数字化投资完成率'],
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { 
+                        lineStyle: { color: '#dee2e6' } 
+                    },
+                    axisLabel: { 
+                        color: '#495057',
+                        fontSize: 10,
+                        formatter: '{value}%'
+                    },
+                    splitLine: { 
+                        lineStyle: { 
+                            type: 'dashed', 
+                            color: '#e9ecef' 
+                        } 
+                    }
+                },
+                series: [
+                    {
+                        name: '研发预算执行率',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#003399' 
+                        },
+                        itemStyle: { 
+                            color: '#003399' 
+                        },
+                        data: [85, 88, 90, 92, 94, 96]
+                    },
+                    {
+                        name: '数字化投资完成率',
+                        type: 'line',
+                        smooth: true,
+                        lineStyle: { 
+                            width: 2, 
+                            color: '#ff6b35' 
+                        },
+                        itemStyle: { 
+                            color: '#ff6b35' 
+                        },
+                        data: [80, 82, 85, 88, 90, 92]
+                    }
+                ],
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    top: '15%',
+                    bottom: '10%'
+                }
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+        
+        // 初始化研发投入技术领域分布图表
+        function initTechAreaChart(container) {
+            const chart = echarts.init(container);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    top: 'center',
+                    textStyle: {
+                        color: '#495057',
+                        fontSize: 10
+                    }
+                },
+                series: [
+                    {
+                        name: '技术领域',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        avoidLabelOverlap: false,
+                        label: {
+                            show: false,
+                            position: 'center'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 12,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        labelLine: {
+                            show: false
+                        },
+                        data: [
+                            { value: 35, name: '智能驾驶', itemStyle: { color: '#003399' } },
+                            { value: 25, name: '电动化', itemStyle: { color: '#28a745' } },
+                            { value: 20, name: '智能座舱', itemStyle: { color: '#ff6b35' } },
+                            { value: 15, name: '数字化平台', itemStyle: { color: '#6f42c1' } },
+                            { value: 5, name: '基础研究', itemStyle: { color: '#6c757d' } }
+                        ]
+                    }
+                ]
+            };
+            
+            chart.setOption(option);
+            return chart;
+        }
+    </script>
+</body>
+</html>

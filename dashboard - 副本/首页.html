@@ -1,0 +1,2618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFO看板首页 - 核心指标速览</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PWA配置 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B3A8D">
+    <meta name="description" content="吉利汽车财务报表分析PWA应用">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="财务分析">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231B3A8D'/%3E%3Ctext x='90' y='100' font-size='60' text-anchor='middle' fill='white' font-family='Arial'%3E财%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --geli-blue: #1B3A8D;
+            --geli-light-blue: #2E4EA1;
+            --geli-accent-blue: #4A6FC1;
+            --geli-bg: #F5F7FA;
+            --card-bg: #ffffff;
+            --shadow-light: rgba(27, 58, 141, 0.08);
+            --shadow-medium: rgba(27, 58, 141, 0.12);
+            --text-primary: #1B3A8D;
+            --text-secondary: #5f6368;
+            --text-tertiary: #7f8c8d;
+            --border-color: rgba(27, 58, 141, 0.1);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --formula-bg: #f8fafc;
+            --formula-border: #e2e8f0;
+            --border-radius: 10px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--geli-bg);
+            color: #333;
+            line-height: 1.5;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        /* 自适应容器 */
+        .container-16x9 {
+            width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            display: flex;
+            position: relative;
+            transition: all 0.4s ease;
+        }
+        
+        /* 左侧导航栏 - 占2部分 */
+        .side-nav {
+            width: 16%; /* 2/12 ≈ 16.67% */
+            background: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 8px var(--shadow-light);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+        
+        /* 导航栏收缩状态 */
+        .side-nav.collapsed {
+            width: 70px;
+        }
+        
+        .side-nav.collapsed .nav-header h1,
+        .side-nav.collapsed .nav-header p,
+        .side-nav.collapsed .nav-item span,
+        .side-nav.collapsed .nav-footer .data-time {
+            display: none;
+        }
+        
+        .side-nav.collapsed .nav-header {
+            padding-bottom: 20px;
+        }
+        
+        .side-nav.collapsed .nav-header i {
+            margin: 0 auto;
+            display: block;
+        }
+        
+        .side-nav.collapsed .nav-item {
+            justify-content: center;
+            padding: 12px 0;
+            margin: 8px 5px;
+        }
+        
+        .side-nav.collapsed .nav-item i {
+            margin-right: 0;
+            font-size: 18px;
+        }
+        
+        .side-nav.collapsed .nav-footer {
+            padding: 20px 10px;
+        }
+        
+        /* 收缩按钮样式 */
+        .collapse-toggle {
+            position: absolute;
+            top: 20px;
+            right: -12px;
+            width: 24px;
+            height: 24px;
+            background: var(--geli-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
+        
+        .collapse-toggle:hover {
+            background: var(--geli-light-blue);
+            transform: scale(1.1);
+        }
+        
+        .side-nav.collapsed .collapse-toggle i {
+            transform: rotate(180deg);
+        }
+        
+        .nav-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .nav-header i {
+            font-size: 28px;
+            color: var(--geli-blue);
+            margin-bottom: 10px;
+        }
+        
+        .nav-header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            transition: all 0.4s ease;
+        }
+        
+        .nav-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: all 0.4s ease;
+        }
+        
+        .nav-menu {
+            flex: 1;
+            padding: 0 10px;
+        }
+        
+        /* 导航项字体放大 */
+        .nav-item {
+            padding: 14px 16px;
+            margin: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            font-size: 16px; /* 放大字体 */
+        }
+        
+        .nav-item i {
+            margin-right: 12px;
+            font-size: 18px; /* 放大图标 */
+            width: 20px;
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(27, 58, 141, 0.05);
+            color: var(--geli-blue);
+        }
+        
+        .nav-item.active {
+            background-color: var(--geli-blue);
+            color: white;
+        }
+        
+        .nav-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            transition: all 0.4s ease;
+        }
+        
+        .data-time {
+            background: rgba(27, 58, 141, 0.08);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-primary);
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+        
+        /* 主内容区域 - 占10部分 */
+        .main-content {
+            flex: 1;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            width: 84%; /* 10/12 ≈ 83.33% */
+            transition: all 0.4s ease;
+        }
+        
+        /* 导航栏收缩时，主内容区域扩大 */
+        .side-nav.collapsed + .main-content {
+            width: calc(100% - 70px);
+        }
+        
+        /* 顶部标题区域 */
+        .main-header {
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .main-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .main-title i {
+            margin-right: 12px;
+            font-size: 26px;
+        }
+        
+        .card-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .period-selector select {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        /* 核心指标速览模块 - 占40%高度 */
+        .core-metrics-container {
+            flex: 0 0 40%; /* 调整为40%高度 */
+            height: 40%; /* 明确高度为40% */
+            margin-bottom: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--shadow-light);
+            border-left: 4px solid var(--geli-blue);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .core-metrics-container:hover {
+            box-shadow: 0 8px 20px var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+        
+        .core-metrics-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .core-metrics-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .core-metrics-title i {
+            margin-right: 10px;
+            font-size: 22px;
+        }
+        
+        .core-metrics-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .core-metrics-period {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--geli-blue);
+            background: rgba(27, 58, 141, 0.08);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        
+        /* 核心指标页签导航 */
+        .metrics-tabs {
+            display: flex;
+            background-color: rgba(27, 58, 141, 0.05);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+        
+        .metric-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .metric-tab i {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+        
+        .metric-tab:hover {
+            color: var(--geli-blue);
+            background-color: rgba(27, 58, 141, 0.08);
+        }
+        
+        .metric-tab.active {
+            color: var(--geli-blue);
+            border-bottom: 3px solid var(--geli-blue);
+            background-color: rgba(27, 58, 141, 0.1);
+        }
+        
+        .core-metrics-content {
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 核心指标网格布局 - 3个指标一排，使用新设计 */
+        .core-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 20px;
+            flex: 1;
+        }
+        
+        /* 导航栏收缩时调整 */
+        .side-nav.collapsed + .main-content .core-metrics-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        /* 新设计的核心指标项 - 按照图片结构，左中右三列布局 */
+        .core-metric-item {
+            background: linear-gradient(135deg, rgba(27, 58, 141, 0.03), rgba(74, 111, 193, 0.05));
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            display: flex;
+            height: 160px;
+            min-height: 0; /* 重置最小高度 */
+            overflow: hidden;
+        }
+        
+        .core-metric-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px var(--shadow-light);
+            border-color: rgba(27, 58, 141, 0.2);
+        }
+        
+        /* 左列 - 指标名称区域 */
+        .metric-left {
+            flex: 0 0 45%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-right: 15px;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .metric-name {
+            font-size: 22px; /* 放大字体 */
+            font-weight: 900;
+            color: var(--text-primary);
+            line-height: 1.3;
+            margin-bottom: 8px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .metric-name span {
+            font-size: 18px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        /* 中列 - 当前数值区域 */
+        .metric-center {
+            flex: 0 0 30%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 15px;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .metric-value-main {
+            font-size: 40px; /* 放大字体 */
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* 指标状态颜色 */
+        .metric-status-good {
+            color: var(--success-color);
+        }
+        
+        .metric-status-warning {
+            color: var(--warning-color);
+        }
+        
+        .metric-status-alert {
+            color: var(--danger-color);
+        }
+        
+        /* 右列 - 对比信息区域 */
+        .metric-right {
+            flex: 0 0 25%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 15px;
+        }
+        
+        .metric-comparison {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .comparison-item {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        .comparison-value {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .comparison-trend {
+            font-weight: 700;
+        }
+        
+        .comparison-trend-up {
+            color: var(--success-color);
+        }
+        
+        .comparison-trend-down {
+            color: var(--danger-color);
+        }
+        
+        .comparison-trend-neutral {
+            color: var(--warning-color);
+        }
+        
+        /* 对比信息中的分隔符样式 */
+        .comparison-separator {
+            margin: 0 5px;
+            color: var(--text-secondary);
+        }
+        
+        /* 下半部分内容布局 - 三个模块 */
+        .bottom-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 20px;
+            height: 60%; /* 下半部分占60% */
+        }
+        
+        /* 导航栏收缩时调整下半部分布局 */
+        .side-nav.collapsed + .main-content .bottom-content {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        /* 卡片通用样式 */
+        .ppt-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid var(--geli-blue);
+        }
+        
+        .ppt-card:hover {
+            box-shadow: 0 6px 16px var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .card-content {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .data-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background-color: rgba(27, 58, 141, 0.05);
+            color: var(--text-primary);
+            font-weight: 700;
+            border-bottom: 2px solid rgba(27, 58, 141, 0.2);
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(27, 58, 141, 0.03);
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-normal {
+            background-color: var(--success-color);
+            box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+        }
+        
+        .status-warning {
+            background-color: var(--warning-color);
+            box-shadow: 0 0 5px rgba(245, 158, 11, 0.5);
+        }
+        
+        .status-alert {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+        }
+        
+        /* 核心指标样式 */
+        .core-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 20px;
+        }
+        
+        .metric-block {
+            background: linear-gradient(135deg, rgba(27, 58, 141, 0.05), rgba(74, 111, 193, 0.1));
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-block:hover {
+            background: rgba(27, 58, 141, 0.15);
+            transform: translateY(-3px);
+        }
+        
+        .metric-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--geli-blue);
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+        }
+        
+        .metric-comparison {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        /* 竞对表格样式 */
+        .benchmark-table th:nth-child(2),
+        .benchmark-table td:nth-child(2) {
+            background-color: rgba(27, 58, 141, 0.08);
+            font-weight: 700;
+        }
+        
+        /* 自定义滚动条 - 为所有卡片添加 */
+        .card-content::-webkit-scrollbar,
+        .core-metrics-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .card-content::-webkit-scrollbar-track,
+        .core-metrics-content::-webkit-scrollbar-track {
+            background: var(--geli-bg);
+            border-radius: 3px;
+        }
+        
+        .card-content::-webkit-scrollbar-thumb,
+        .core-metrics-content::-webkit-scrollbar-thumb {
+            background: rgba(27, 58, 141, 0.2);
+            border-radius: 3px;
+        }
+        
+        .card-content::-webkit-scrollbar-thumb:hover,
+        .core-metrics-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(27, 58, 141, 0.4);
+        }
+        
+        /* 页脚 */
+        .ppt-footer {
+            padding: 12px 30px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+        
+        .ppt-footer div:first-child {
+            text-align: left;
+        }
+        
+        .ppt-footer div:last-child {
+            text-align: right;
+        }
+        
+        /* 悬浮窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 1400px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(30px);
+            transition: transform 0.4s ease;
+        }
+        
+        .modal-overlay.active .modal-container {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            padding: 20px 30px;
+            background: linear-gradient(135deg, var(--geli-blue), var(--geli-light-blue));
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+        
+        .modal-title i {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-content {
+            padding: 0;
+            overflow: auto;
+            flex: 1;
+        }
+        
+        .modal-table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+        
+        .modal-table th {
+            background-color: rgba(27, 58, 141, 0.08);
+            color: var(--text-primary);
+            font-weight: 700;
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .modal-table td {
+            padding: 12px 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        .modal-table tr:hover {
+            background-color: rgba(27, 58, 141, 0.03);
+        }
+        
+        .modal-table th:first-child,
+        .modal-table td:first-child {
+            padding-left: 30px;
+        }
+        
+        .modal-table th:last-child,
+        .modal-table td:last-child {
+            padding-right: 30px;
+        }
+        
+        /* 状态列样式 */
+        .status-cell {
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-healthy {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+        
+        .status-achieved {
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+        
+        .status-alert {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+        
+        /* 预警方式样式 */
+        .warning-method {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        /* 加载状态提示样式 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(27, 58, 141, 0.1);
+            border-top: 5px solid var(--geli-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin: 20px;
+            color: var(--danger-color);
+            text-align: center;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .back-button {
+            padding: 10px 20px;
+            background-color: var(--geli-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+            margin-top: 15px;
+        }
+        
+        .back-button:hover {
+            background-color: var(--geli-light-blue);
+        }
+        
+        /* 内嵌页面容器 */
+        .iframe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1500;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .iframe-container.active {
+            display: flex;
+        }
+        
+        .iframe-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, var(--geli-blue), var(--geli-light-blue));
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        
+        .iframe-title {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+        
+        .iframe-title i {
+            margin-right: 10px;
+        }
+        
+        .close-iframe {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+        
+        .close-iframe:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 优化iframe样式，确保页面完整显示 */
+        .iframe-content {
+            flex: 1;
+            width: 100%;
+            border: none;
+            overflow: auto;
+        }
+        
+        /* 确保iframe内部内容能够完整显示 */
+        .iframe-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* 调整iframe容器，确保内容完整显示 */
+        .macro-frame-container {
+            flex: 1;
+            width: 100%;
+            overflow: auto;
+            position: relative;
+        }
+        
+        /* 确保宏观经济页面能够完整显示 */
+        .macro-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            transform-origin: 0 0;
+        }
+        
+        /* 响应式设计 - 适配不同尺寸的电脑屏幕 */
+        @media (max-width: 1920px) {
+            /* 1920px大屏幕 */
+            .core-metrics-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .bottom-content {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 1600px) {
+            /* 1600px中大屏幕 */
+            .side-nav {
+                width: 18%;
+            }
+            
+            .main-content {
+                width: 82%;
+            }
+            
+            .core-metrics-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .core-metric-item {
+                height: 140px;
+            }
+            
+            .metric-value-main {
+                font-size: 32px;
+            }
+        }
+        
+        @media (max-width: 1400px) {
+            /* 1400px中屏幕 */
+            .side-nav {
+                width: 20%;
+            }
+            
+            .main-content {
+                width: 80%;
+            }
+            
+            .core-metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .bottom-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .main-title {
+                font-size: 22px;
+            }
+            
+            .core-metrics-title {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            /* 1200px中小屏幕 */
+            .side-nav {
+                width: 22%;
+            }
+            
+            .main-content {
+                width: 78%;
+            }
+            
+            .nav-item {
+                font-size: 14px;
+            }
+            
+            .core-metric-item {
+                height: 130px;
+            }
+            
+            .metric-name {
+                font-size: 18px;
+            }
+            
+            .metric-value-main {
+                font-size: 28px;
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            /* 1024px小屏幕 */
+            .side-nav {
+                width: 25%;
+            }
+            
+            .main-content {
+                width: 75%;
+            }
+            
+            .core-metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .bottom-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-item span {
+                font-size: 13px;
+            }
+            
+            .main-title {
+                font-size: 20px;
+            }
+            
+            .core-metrics-title {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            /* 768px平板屏幕 */
+            .side-nav {
+                width: 30%;
+            }
+            
+            .main-content {
+                width: 70%;
+            }
+            
+            .nav-item {
+                padding: 12px 14px;
+            }
+            
+            .nav-item i {
+                font-size: 16px;
+            }
+            
+            .core-metric-item {
+                height: 120px;
+            }
+            
+            .metric-name {
+                font-size: 16px;
+            }
+            
+            .metric-value-main {
+                font-size: 24px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* 480px手机屏幕 */
+            .side-nav {
+                width: 100%;
+                position: absolute;
+                left: -100%;
+                transition: left 0.4s ease;
+            }
+            
+            .side-nav.active {
+                left: 0;
+            }
+            
+            .main-content {
+                width: 100%;
+            }
+            
+            .main-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-16x9">
+        <!-- 左侧导航栏 -->
+        <aside class="side-nav">
+            <div class="collapse-toggle" id="collapse-toggle">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            <div class="nav-header">
+                <i class="fas fa-chart-line"></i>
+                <h1>CFO经营看板</h1>
+                <p>核心指标速览</p>
+            </div>
+            
+            <div class="nav-menu">
+                <div class="nav-item active" data-page="dashboard" data-filename="核心指标速览.html">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>核心指标速览</span>
+                </div>
+                <!-- 删除了"关键指标概览"项 -->
+                <div class="nav-item" data-page="macro" data-filename="宏观环境.html">
+                    <i class="fas fa-globe"></i>
+                    <span>宏观环境</span>
+                </div>
+                <div class="nav-item" data-page="growth" data-filename="业务增长.html">
+                    <i class="fas fa-rocket"></i>
+                    <span>业务增长</span>
+                </div>
+                <div class="nav-item" data-page="profit" data-filename="盈利提升.html">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>盈利提升</span>
+                </div>
+                <div class="nav-item" data-page="expense" data-filename="费用效能.html">
+                    <i class="fas fa-cogs"></i>
+                    <span>费用效能</span>
+                </div>
+                <!-- 新增：资产资金管理 -->
+                <div class="nav-item" data-page="asset" data-filename="资产资金管理.html">
+                    <i class="fas fa-landmark"></i>
+                    <span>资产资金管理</span>
+                </div>
+                <div class="nav-item" data-page="benchmark" data-filename="竞争对标.html">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>竞争对标</span>
+                </div>
+                <div class="nav-item" data-page="financial" data-filename="财务报表分析.html">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>财务报表分析</span>
+                </div>
+            </div>
+            
+            <div class="nav-footer">
+                <div class="data-time">数据更新时间: 2024-10-28 09:30:00</div>
+            </div>
+        </aside>
+        
+        <!-- 主内容区域 -->
+        <main class="main-content" id="main-content">
+            <!-- 错误提示 -->
+            <div class="error-message" id="error-message">
+                <i class="fas fa-exclamation-triangle" style="font-size: 36px; margin-bottom: 15px;"></i>
+                <h3 id="error-title">无法加载页面</h3>
+                <p id="error-details">请确保文件与当前文件在同一目录下。</p>
+                <p>如果文件位于其他位置，请修改代码中的文件路径。</p>
+                <button class="back-button" id="back-to-dashboard">返回核心指标速览</button>
+            </div>
+            
+            <!-- 加载状态提示 -->
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="spinner"></div>
+                <div class="loading-text" id="loading-text">正在加载页面...</div>
+            </div>
+            
+            <!-- 原始内容容器（默认显示） -->
+            <div id="original-content">
+                <!-- 顶部标题区域 -->
+                <header class="main-header">
+                    <div>
+                        <div class="main-title"><i class="fas fa-tachometer-alt"></i> 核心指标速览</div>
+                        <div class="card-subtitle">关键经营指标实时监控与趋势分析</div>
+                    </div>
+                    <div class="period-selector">
+                        <select id="period-select">
+                            <option value="q3">2024年第三季度</option>
+                            <option value="q2">2024年第二季度</option>
+                            <option value="q1">2024年第一季度</option>
+                        </select>
+                    </div>
+                </header>
+                
+                <!-- 核心指标速览卡片 - 占40%高度 -->
+                <section class="core-metrics-container" id="core-metrics-container">
+                    <div class="core-metrics-header">
+                        <h2 class="core-metrics-title"><i class="fas fa-chart-line"></i> 核心指标速览</h2>
+                        <div class="core-metrics-controls">
+                            <div class="core-metrics-period">2024年第三季度</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 核心指标页签导航 -->
+                    <div class="metrics-tabs">
+                        <div class="metric-tab active" data-tab="business-total">
+                            <i class="fas fa-chart-pie"></i> 业务合计
+                        </div>
+                        <div class="metric-tab" data-tab="vehicle-business">
+                            <i class="fas fa-car"></i> 整车业务
+                        </div>
+                        <div class="metric-tab" data-tab="cooperation-business">
+                            <i class="fas fa-handshake"></i> 对外合作业务
+                        </div>
+                    </div>
+                    
+                    <div class="core-metrics-content">
+                        <!-- 业务合计页签内容 -->
+                        <div class="core-metrics-grid" id="business-total-content">
+                            <!-- 营业收入 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">营业收入（亿元）<br><span>占总收入28%</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">256.8</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">265.4亿元</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-3.2%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 整体销量 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">整体销量（万辆）<br><span>新能源项目占比52%</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-warning">13.8</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">14.4</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-4.1%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 毛利率 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">毛利率（%）<br><span>技术授权毛利率：28%</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-alert">16.2</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">18.0%</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-1.8%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 净利率 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">净利率（%）<br><span>连续三季度增长</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-alert">4.8%</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">6.0%</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-1.2%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 研发投入 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">研发投入（亿元）<br><span>占研发总投入31%</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">18.5</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">16.0亿元</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-up">+15.7%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 期末库存量 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">期末库存量（台）<br><span>库存深度48天</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-warning">8,450</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">9,660台</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-12.5%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 整车业务页签内容 -->
+                        <div class="core-metrics-grid" id="vehicle-business-content" style="display: none;">
+                            <!-- 整车销售收入 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">整车销售收入<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">185.6亿元</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">191.8亿元</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-3.2%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 整车销量 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">整车销量<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-warning">13.8万辆</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">14.4万辆</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-4.1%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 整车毛利率 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">整车毛利率<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-alert">16.2%</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">18.0%</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-1.8%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 整车利润 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">整车利润<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-alert">9.8亿元</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">12.0亿元</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-18.3%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 单车研发投入 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">单车研发投入<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">1.34万元</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">1.16万元</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-up">+15.7%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 整车库存量 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">整车库存量<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-warning">8,450台</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">9,660台</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-12.5%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 对外合作业务页签内容 -->
+                        <div class="core-metrics-grid" id="cooperation-business-content" style="display: none;">
+                            <!-- 合作业务收入 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">合作业务收入<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">71.2亿元</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">61.8亿元</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-up">+15.2%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 合作项目数量 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">合作项目数量<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">28个</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">21个</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-up">+33.3%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 合作业务毛利率 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">合作业务毛利率<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-warning">21.5%</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">23.8%</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-down">-2.3%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 合作业务利润 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">合作业务利润<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">2.5亿元</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">2.25亿元</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-up">+11.2%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 合作研发投入 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">合作研发投入<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">5.8亿元</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">4.5亿元</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-up">+28.5%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 合作项目完成率 -->
+                            <div class="core-metric-item">
+                                <div class="metric-left">
+                                    <div class="metric-name">合作项目完成率<br><span>（2024）</span></div>
+                                </div>
+                                <div class="metric-center">
+                                    <div class="metric-value-main metric-status-good">82.5%</div>
+                                </div>
+                                <div class="metric-right">
+                                    <div class="metric-comparison">
+                                        <div class="comparison-item">
+                                            2023: <span class="comparison-value">75.8%</span>
+                                            <span class="comparison-separator">|</span>
+                                            同比 <span class="comparison-trend comparison-trend-up">+8.7%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 下半部分内容 - 三个模块 -->
+                <div class="bottom-content">
+                    <!-- 经营业绩（规模与增长） -->
+                    <section class="ppt-card">
+                        <div class="card-header">
+                            <h2 class="card-title"><i class="fas fa-chart-line"></i> 经营业绩（规模与增长）</h2>
+                        </div>
+                        
+                        <div class="card-content">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>指标</th>
+                                        <th>当期值</th>
+                                        <th>同比</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>整车销售收入</td>
+                                        <td>185.6亿元</td>
+                                        <td>+5.2%</td>
+                                        <td><span class="status-indicator status-alert"></span>预警</td>
+                                    </tr>
+                                    <tr>
+                                        <td>新增订单量</td>
+                                        <td>15.2万</td>
+                                        <td>+8.7%</td>
+                                        <td><span class="status-indicator status-alert"></span>预警</td>
+                                    </tr>
+                                    <tr>
+                                        <td>海外市场收入占比</td>
+                                        <td>28%</td>
+                                        <td>+2.1%</td>
+                                        <td><span class="status-indicator status-alert"></span>预警</td>
+                                    </tr>
+                                    <tr>
+                                        <td>研发投入强度</td>
+                                        <td>7.2%</td>
+                                        <td>+0.8%</td>
+                                        <td><span class="status-indicator status-normal"></span>健康</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="metric-block" style="margin-top: 20px;">
+                                <div class="metric-title">预算执行偏差率</div>
+                                <div class="metric-value">+1.8%</div>
+                                <div class="metric-comparison">预警阈值: ±2%</div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- 现金流与资本效率 -->
+                    <section class="ppt-card">
+                        <div class="card-header">
+                            <h2 class="card-title"><i class="fas fa-money-bill-wave"></i> 现金流与资本效率</h2>
+                        </div>
+                        
+                        <div class="card-content">
+                            <div class="core-metrics">
+                                <div class="metric-block">
+                                    <div class="metric-title">自由现金流 (FCF)</div>
+                                    <div class="metric-value">32亿元</div>
+                                    <div class="metric-comparison">同比: +22% | 环比: +18%</div>
+                                </div>
+                                
+                                <div class="metric-block">
+                                    <div class="metric-title">经营性净现金流</div>
+                                    <div class="metric-value">85亿元</div>
+                                    <div class="metric-comparison">同比: +25% | 环比: +12%</div>
+                                </div>
+                                
+                                <div class="metric-block">
+                                    <div class="metric-title">应收账款余额</div>
+                                    <div class="metric-value">68.5亿元</div>
+                                    <div class="metric-comparison">同比: +45% | 环比: +28%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- 价值创造（盈利与回报） -->
+                    <section class="ppt-card">
+                        <div class="card-header">
+                            <h2 class="card-title"><i class="fas fa-chart-bar"></i> 价值创造（盈利与回报）</h2>
+                        </div>
+                        
+                        <div class="card-content">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>关键指标</th>
+                                        <th>本集团</th>
+                                        <th>主要竞对A</th>
+                                        <th>差距分析</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>整车毛利率</td>
+                                        <td>16.2%</td>
+                                        <td>18.5%</td>
+                                        <td>成本结构优化空间</td>
+                                    </tr>
+                                    <tr>
+                                        <td>售后毛利率</td>
+                                        <td>42.5%</td>
+                                        <td>48%</td>
+                                        <td>同比下滑＞10%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>利润总额</td>
+                                        <td>12.3亿</td>
+                                        <td>15.2亿</td>
+                                        <td>同比下滑 > 10%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>投入资本回报率(ROIC)</td>
+                                        <td>8.5%</td>
+                                        <td>9.5%</td>
+                                        <td>低于公司WACC</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+                
+                <!-- 页脚 -->
+                <footer class="ppt-footer">
+                    <div>CFO看板首页 v2.0 | 数据来源：集团财务系统、业务系统集成</div>
+                    <div>© 2024 吉利汽车集团 CFO办公室 | 更新频率：核心指标实时更新</div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <!-- 悬浮窗 - 关键指标总览表 -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-table"></i> 关键指标总览表</h2>
+                <button class="close-modal" id="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="modal-table-container">
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>指标标准名称</th>
+                                <th>当期值</th>
+                                <th>同比</th>
+                                <th>环比</th>
+                                <th>月预算</th>
+                                <th>月预测</th>
+                                <th>月实际</th>
+                                <th>月累计</th>
+                                <th>年预算</th>
+                                <th>年预测</th>
+                                <th>年实际</th>
+                                <th>年累计</th>
+                                <th>状态（健康/达标/预警）</th>
+                                <th>预警方式</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>整车销售收入</td>
+                                <td>185.6亿</td>
+                                <td>+5.2%</td>
+                                <td>+8.3%</td>
+                                <td>60亿</td>
+                                <td>61.2亿</td>
+                                <td>61.8亿</td>
+                                <td>185.6亿</td>
+                                <td>720亿</td>
+                                <td>740亿</td>
+                                <td>185.6亿</td>
+                                <td>185.6亿</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">目标达成率 < 95%</div></td>
+                            </tr>
+                            <tr>
+                                <td>海外市场收入占比</td>
+                                <td>28%</td>
+                                <td>+2.1%</td>
+                                <td>-1.5%</td>
+                                <td>30%</td>
+                                <td>28.5%</td>
+                                <td>28%</td>
+                                <td>27.8%</td>
+                                <td>35%</td>
+                                <td>32%</td>
+                                <td>28%</td>
+                                <td>27.8%</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">占比趋势连续下滑</div></td>
+                            </tr>
+                            <tr>
+                                <td>新增订单量</td>
+                                <td>15.2万</td>
+                                <td>+8.7%</td>
+                                <td>-2.1%</td>
+                                <td>5.1万</td>
+                                <td>5.3万</td>
+                                <td>5.2万</td>
+                                <td>15.2万</td>
+                                <td>60万</td>
+                                <td>62万</td>
+                                <td>15.2万</td>
+                                <td>15.2万</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">环比连续下滑</div></td>
+                            </tr>
+                            <tr>
+                                <td>整车毛利率</td>
+                                <td>16.2%</td>
+                                <td>-1.8%</td>
+                                <td>-0.4%</td>
+                                <td>17.5%</td>
+                                <td>16.8%</td>
+                                <td>16.2%</td>
+                                <td>16.4%</td>
+                                <td>18%</td>
+                                <td>17.2%</td>
+                                <td>16.2%</td>
+                                <td>16.4%</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">低于车型目标值</div></td>
+                            </tr>
+                            <tr>
+                                <td>售后毛利率</td>
+                                <td>42.5%</td>
+                                <td>-12.3%</td>
+                                <td>-3.2%</td>
+                                <td>48%</td>
+                                <td>44%</td>
+                                <td>42.5%</td>
+                                <td>43.8%</td>
+                                <td>50%</td>
+                                <td>46%</td>
+                                <td>42.5%</td>
+                                <td>43.8%</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">同比下滑＞10%</div></td>
+                            </tr>
+                            <tr>
+                                <td>边际贡献总额</td>
+                                <td>38.5亿</td>
+                                <td>-12.5%</td>
+                                <td>-5.2%</td>
+                                <td>12.8亿</td>
+                                <td>12.5亿</td>
+                                <td>12.3亿</td>
+                                <td>38.5亿</td>
+                                <td>150亿</td>
+                                <td>145亿</td>
+                                <td>38.5亿</td>
+                                <td>38.5亿</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">同比偏差 > 10%</div></td>
+                            </tr>
+                            <tr>
+                                <td>利润总额</td>
+                                <td>12.3亿</td>
+                                <td>-15.2%</td>
+                                <td>-8.1%</td>
+                                <td>4.5亿</td>
+                                <td>4.2亿</td>
+                                <td>4.1亿</td>
+                                <td>12.3亿</td>
+                                <td>50亿</td>
+                                <td>48亿</td>
+                                <td>12.3亿</td>
+                                <td>12.3亿</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">同比下滑 > 10%</div></td>
+                            </tr>
+                            <tr>
+                                <td>整车利润</td>
+                                <td>9.8亿</td>
+                                <td>-18.3%</td>
+                                <td>-9.5%</td>
+                                <td>3.8亿</td>
+                                <td>3.5亿</td>
+                                <td>3.3亿</td>
+                                <td>9.8亿</td>
+                                <td>40亿</td>
+                                <td>38亿</td>
+                                <td>9.8亿</td>
+                                <td>9.8亿</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">同比下滑 > 15%</div></td>
+                            </tr>
+                            <tr>
+                                <td>后市场利润</td>
+                                <td>2.5亿</td>
+                                <td>-11.2%</td>
+                                <td>-5.8%</td>
+                                <td>0.9亿</td>
+                                <td>0.85亿</td>
+                                <td>0.82亿</td>
+                                <td>2.5亿</td>
+                                <td>10亿</td>
+                                <td>9.5亿</td>
+                                <td>2.5亿</td>
+                                <td>2.5亿</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">同比下滑 > 10%</div></td>
+                            </tr>
+                            <tr>
+                                <td>研发投入强度</td>
+                                <td>7.2%</td>
+                                <td>+0.8%</td>
+                                <td>+1.2%</td>
+                                <td>6.8%</td>
+                                <td>7.0%</td>
+                                <td>7.2%</td>
+                                <td>7.1%</td>
+                                <td>6.5%</td>
+                                <td>6.8%</td>
+                                <td>7.2%</td>
+                                <td>7.1%</td>
+                                <td><div class="status-cell"><span class="status-healthy">健康</span></div></td>
+                                <td><div class="warning-method">低于公司战略规划目标</div></td>
+                            </tr>
+                            <tr>
+                                <td>投入资本回报率(ROIC)</td>
+                                <td>8.5%</td>
+                                <td>-1.2%</td>
+                                <td>-0.5%</td>
+                                <td>9.0%</td>
+                                <td>8.8%</td>
+                                <td>8.5%</td>
+                                <td>8.6%</td>
+                                <td>10%</td>
+                                <td>9.5%</td>
+                                <td>8.5%</td>
+                                <td>8.6%</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">低于公司WACC</div></td>
+                            </tr>
+                            <tr>
+                                <td>自由现金流</td>
+                                <td>32亿</td>
+                                <td>+22%</td>
+                                <td>+18%</td>
+                                <td>10亿</td>
+                                <td>11亿</td>
+                                <td>10.5亿</td>
+                                <td>32亿</td>
+                                <td>120亿</td>
+                                <td>125亿</td>
+                                <td>32亿</td>
+                                <td>32亿</td>
+                                <td><div class="status-cell"><span class="status-healthy">健康</span></div></td>
+                                <td><div class="warning-method">净额为负</div></td>
+                            </tr>
+                            <tr>
+                                <td>经营性净现金流</td>
+                                <td>85亿</td>
+                                <td>+25%</td>
+                                <td>+12%</td>
+                                <td>28亿</td>
+                                <td>29亿</td>
+                                <td>28.5亿</td>
+                                <td>85亿</td>
+                                <td>300亿</td>
+                                <td>310亿</td>
+                                <td>85亿</td>
+                                <td>85亿</td>
+                                <td><div class="status-cell"><span class="status-healthy">健康</span></div></td>
+                                <td><div class="warning-method">净额为负</div></td>
+                            </tr>
+                            <tr>
+                                <td>应收账款余额</td>
+                                <td>68.5亿</td>
+                                <td>+45%</td>
+                                <td>+28%</td>
+                                <td>50亿</td>
+                                <td>55亿</td>
+                                <td>68.5亿</td>
+                                <td>68.5亿</td>
+                                <td>200亿</td>
+                                <td>220亿</td>
+                                <td>68.5亿</td>
+                                <td>68.5亿</td>
+                                <td><div class="status-cell"><span class="status-alert">预警</span></div></td>
+                                <td><div class="warning-method">余额异常激增且与收入增长不匹配</div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 内嵌页面容器 - 用于加载各导航项页面 -->
+    <div class="iframe-container" id="iframe-container">
+        <div class="iframe-header">
+            <h2 class="iframe-title" id="iframe-title"><i class="fas fa-globe"></i> 页面加载中...</h2>
+            <button class="close-iframe" id="close-iframe">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="macro-frame-container">
+            <iframe class="macro-frame" id="macro-iframe" src="" frameborder="0"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // 交互功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const coreMetricsContainer = document.getElementById('core-metrics-container');
+            const modalOverlay = document.getElementById('modal-overlay');
+            const closeModal = document.getElementById('close-modal');
+            const collapseToggle = document.getElementById('collapse-toggle');
+            const sideNav = document.querySelector('.side-nav');
+            const iframeContainer = document.getElementById('iframe-container');
+            const macroIframe = document.getElementById('macro-iframe');
+            const closeIframe = document.getElementById('close-iframe');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const errorMessage = document.getElementById('error-message');
+            const backToDashboard = document.getElementById('back-to-dashboard');
+            const originalContent = document.getElementById('original-content');
+            const navItems = document.querySelectorAll('.nav-item');
+            const iframeTitle = document.getElementById('iframe-title');
+            const loadingText = document.getElementById('loading-text');
+            const errorTitle = document.getElementById('error-title');
+            const errorDetails = document.getElementById('error-details');
+            
+            // 获取页签元素
+            const metricTabs = document.querySelectorAll('.metric-tab');
+            const tabContents = {
+                'business-total': document.getElementById('business-total-content'),
+                'vehicle-business': document.getElementById('vehicle-business-content'),
+                'cooperation-business': document.getElementById('cooperation-business-content')
+            };
+            
+            // 页签切换功能
+            metricTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // 更新页签激活状态
+                    metricTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 隐藏所有内容
+                    Object.values(tabContents).forEach(content => {
+                        if (content) content.style.display = 'none';
+                    });
+                    
+                    // 显示选中的内容
+                    if (tabContents[tabId]) {
+                        tabContents[tabId].style.display = 'grid';
+                    }
+                });
+            });
+            
+            // 指标状态随机化函数
+            function randomizeMetricStatus() {
+                const metricValues = document.querySelectorAll('.metric-value-main');
+                metricValues.forEach(metric => {
+                    // 随机决定状态：0=良好，1=警告，2=警报
+                    const randomStatus = Math.floor(Math.random() * 3);
+                    
+                    // 移除所有状态类
+                    metric.classList.remove('metric-status-good', 'metric-status-warning', 'metric-status-alert');
+                    
+                    // 根据随机状态添加对应的类
+                    if (randomStatus === 0) {
+                        metric.classList.add('metric-status-good');
+                    } else if (randomStatus === 1) {
+                        metric.classList.add('metric-status-warning');
+                    } else {
+                        metric.classList.add('metric-status-alert');
+                    }
+                });
+            }
+            
+            // 初始化随机状态
+            randomizeMetricStatus();
+            
+            // 更新时间
+            function updateDateTime() {
+                const now = new Date();
+                const formattedDate = now.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }).replace(/\//g, '-');
+                
+                const dateElement = document.querySelector('.data-time');
+                if (dateElement) {
+                    dateElement.textContent = `数据更新时间: ${formattedDate}`;
+                }
+            }
+            
+            // 初始化更新时间
+            updateDateTime();
+            
+            // 每30秒更新一次时间和指标状态
+            setInterval(() => {
+                updateDateTime();
+                randomizeMetricStatus();
+            }, 30000);
+            
+            // 进度条动画
+            const progressBars = document.querySelectorAll('.progress-bar-fill');
+            if (progressBars.length > 0) {
+                progressBars.forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 300);
+                });
+            }
+            
+            // 导航菜单点击效果
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const page = this.getAttribute('data-page');
+                    const filename = this.getAttribute('data-filename');
+                    const navText = this.querySelector('span').textContent;
+                    
+                    // 更新导航激活状态
+                    navItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 处理不同页面
+                    if (page === 'dashboard') {
+                        // 显示主仪表板
+                        showDashboard();
+                    } else {
+                        // 显示其他页面
+                        showExternalPage(page, filename, navText);
+                    }
+                });
+            });
+            
+            // 显示主仪表板
+            function showDashboard() {
+                iframeContainer.classList.remove('active');
+                originalContent.style.display = 'block';
+                errorMessage.classList.remove('show');
+                loadingOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                // 恢复导航栏激活状态
+                navItems.forEach(item => {
+                    if (item.getAttribute('data-page') === 'dashboard') {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+            
+            // 显示外部页面
+            function showExternalPage(page, filename, navText) {
+                // 设置加载文本
+                loadingText.textContent = `正在加载${navText}...`;
+                
+                // 设置iframe标题
+                iframeTitle.innerHTML = `<i class="${getPageIcon(page)}"></i> ${navText}`;
+                
+                // 显示加载状态
+                loadingOverlay.classList.add('active');
+                errorMessage.classList.remove('show');
+                
+                // 重置iframe源，确保每次点击都重新加载
+                macroIframe.src = '';
+                
+                // 短暂延迟后加载页面，确保iframe重置完成
+                setTimeout(() => {
+                    // 使用相对路径加载文件（所有文件在同一目录）
+                    macroIframe.src = filename;
+                    
+                    // 等待iframe加载
+                    macroIframe.onload = function() {
+                        loadingOverlay.classList.remove('active');
+                        iframeContainer.classList.add('active');
+                        originalContent.style.display = 'none';
+                        document.body.style.overflow = 'hidden';
+                        
+                        // 尝试调整iframe内部页面的显示
+                        try {
+                            // 如果同源，可以尝试调整iframe内部页面的样式
+                            const iframeDoc = macroIframe.contentDocument || macroIframe.contentWindow.document;
+                            
+                            // 设置iframe内部页面的body样式，确保内容完整显示
+                            if (iframeDoc && iframeDoc.body) {
+                                iframeDoc.body.style.width = '100%';
+                                iframeDoc.body.style.height = '100%';
+                                iframeDoc.body.style.margin = '0';
+                                iframeDoc.body.style.padding = '0';
+                                iframeDoc.body.style.overflow = 'auto';
+                                
+                                // 尝试查找图表容器并确保它们完整显示
+                                const charts = iframeDoc.querySelectorAll('.chart-container, canvas, svg, .echarts');
+                                charts.forEach(chart => {
+                                    chart.style.maxWidth = '100%';
+                                    chart.style.height = 'auto';
+                                });
+                            }
+                        } catch (e) {
+                            // 跨域限制，无法访问iframe内部文档
+                            console.log('无法访问iframe内部文档（跨域限制），但页面已加载');
+                        }
+                        
+                        // 更新导航栏激活状态
+                        navItems.forEach(item => {
+                            if (item.getAttribute('data-page') === page) {
+                                item.classList.add('active');
+                            } else {
+                                item.classList.remove('active');
+                            }
+                        });
+                    };
+                    
+                    // 处理加载错误
+                    macroIframe.onerror = function() {
+                        loadingOverlay.classList.remove('active');
+                        iframeContainer.classList.remove('active');
+                        errorTitle.textContent = `无法加载${navText}页面`;
+                        errorDetails.textContent = `请确保文件 "${filename}" 与当前页面在同一目录下。`;
+                        errorMessage.classList.add('show');
+                        originalContent.style.display = 'none';
+                        
+                        // 更新导航栏激活状态
+                        navItems.forEach(item => {
+                            if (item.getAttribute('data-page') === page) {
+                                item.classList.add('active');
+                            } else {
+                                item.classList.remove('active');
+                            }
+                        });
+                    };
+                }, 100);
+            }
+            
+            // 获取页面图标
+            function getPageIcon(page) {
+                switch(page) {
+                    case 'macro': return 'fas fa-globe';
+                    case 'growth': return 'fas fa-rocket';
+                    case 'profit': return 'fas fa-money-bill-wave';
+                    case 'expense': return 'fas fa-cogs';
+                    case 'asset': return 'fas fa-landmark';
+                    case 'benchmark': return 'fas fa-balance-scale';
+                    case 'financial': return 'fas fa-file-invoice-dollar';
+                    default: return 'fas fa-file';
+                }
+            }
+            
+            // 卡片点击效果
+            const cards = document.querySelectorAll('.ppt-card, .core-metrics-container');
+            cards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // 防止在点击内部元素时触发
+                    if (e.target.tagName === 'SELECT' || e.target.closest('.analysis-entry') || e.target.closest('.metric-tab')) {
+                        return;
+                    }
+                    
+                    this.style.boxShadow = '0 12px 24px rgba(27, 58, 141, 0.25)';
+                    setTimeout(() => {
+                        if (this.classList.contains('core-metrics-container')) {
+                            this.style.boxShadow = '0 2px 8px var(--shadow-light)';
+                        } else {
+                            this.style.boxShadow = '0 2px 8px var(--shadow-light)';
+                        }
+                    }, 300);
+                });
+            });
+            
+            // 指标块悬停效果
+            const metricBlocks = document.querySelectorAll('.core-metric-item, .metric-block');
+            metricBlocks.forEach(block => {
+                block.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                });
+                
+                block.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // 核心指标速览点击弹出悬浮窗
+            coreMetricsContainer.addEventListener('click', function(e) {
+                // 防止点击页签时触发悬浮窗
+                if (e.target.closest('.metric-tab')) {
+                    return;
+                }
+                modalOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+            
+            // 关闭悬浮窗
+            closeModal.addEventListener('click', function() {
+                modalOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+            
+            // 点击悬浮窗背景关闭
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    modalOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+            
+            // 关闭内嵌页面
+            closeIframe.addEventListener('click', function() {
+                showDashboard();
+            });
+            
+            // 返回仪表板按钮
+            backToDashboard.addEventListener('click', function() {
+                showDashboard();
+            });
+            
+            // ESC键关闭悬浮窗
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (modalOverlay.classList.contains('active')) {
+                        modalOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                    if (iframeContainer.classList.contains('active')) {
+                        showDashboard();
+                    }
+                }
+            });
+            
+            // 导航栏收缩按钮功能
+            collapseToggle.addEventListener('click', function() {
+                sideNav.classList.toggle('collapsed');
+                
+                // 更新按钮图标
+                const icon = this.querySelector('i');
+                if (sideNav.classList.contains('collapsed')) {
+                    icon.classList.remove('fa-chevron-left');
+                    icon.classList.add('fa-chevron-right');
+                } else {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-left');
+                }
+            });
+        });
+        
+        // 周期选择器功能
+        document.getElementById('period-select').addEventListener('change', function() {
+            const period = this.value;
+            let periodText = '';
+            
+            switch(period) {
+                case 'q3':
+                    periodText = '2024年第三季度';
+                    break;
+                case 'q2':
+                    periodText = '2024年第二季度';
+                    break;
+                case 'q1':
+                    periodText = '2024年第一季度';
+                    break;
+            }
+            
+            // 更新显示的时间
+            const periodElement = document.querySelector('.core-metrics-period');
+            if (periodElement) {
+                periodElement.textContent = periodText;
+            }
+            
+            // 模拟数据更新效果
+            const metrics = document.querySelectorAll('.metric-value-main, .metric-value');
+            metrics.forEach(metric => {
+                metric.style.opacity = '0.5';
+                metric.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    metric.style.opacity = '1';
+                    metric.style.transform = 'scale(1)';
+                }, 300);
+            });
+            
+            console.log(`数据周期切换到: ${periodText}`);
+        });
+        
+        // 键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            // F11键进入全屏
+            if (e.key === 'F11') {
+                e.preventDefault();
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log(`全屏请求失败: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
+            // ESC键退出全屏
+            if (e.key === 'Escape' && document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            
+            // 空格键刷新数据和随机状态
+            if (e.key === ' ') {
+                e.preventDefault();
+                // 随机改变指标状态
+                const metricValues = document.querySelectorAll('.metric-value-main');
+                metricValues.forEach(metric => {
+                    // 随机决定状态：0=良好，1=警告，2=警报
+                    const randomStatus = Math.floor(Math.random() * 3);
+                    
+                    // 移除所有状态类
+                    metric.classList.remove('metric-status-good', 'metric-status-warning', 'metric-status-alert');
+                    
+                    // 根据随机状态添加对应的类
+                    if (randomStatus === 0) {
+                        metric.classList.add('metric-status-good');
+                    } else if (randomStatus === 1) {
+                        metric.classList.add('metric-status-warning');
+                    } else {
+                        metric.classList.add('metric-status-alert');
+                    }
+                    
+                    // 添加动画效果
+                    metric.style.transform = 'scale(1.05)';
+                    setTimeout(() => {
+                        metric.style.transform = 'scale(1)';
+                    }, 200);
+                });
+                
+                // 更新时间
+                updateDateTime();
+            }
+            
+            // Ctrl+Shift+C 切换导航栏收缩状态
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                document.getElementById('collapse-toggle').click();
+            }
+            
+            // Alt+M 打开宏观经济页面
+            if (e.altKey && e.key === 'm') {
+                e.preventDefault();
+                document.querySelector('[data-page="macro"]').click();
+            }
+            
+            // Alt+D 返回仪表板
+            if (e.altKey && e.key === 'd') {
+                e.preventDefault();
+                document.querySelector('[data-page="dashboard"]').click();
+            }
+            
+            // Alt+1 打开业务增长
+            if (e.altKey && e.key === '1') {
+                e.preventDefault();
+                document.querySelector('[data-page="growth"]').click();
+            }
+            
+            // Alt+2 打开盈利提升
+            if (e.altKey && e.key === '2') {
+                e.preventDefault();
+                document.querySelector('[data-page="profit"]').click();
+            }
+            
+            // Alt+3 打开费用效能
+            if (e.altKey && e.key === '3') {
+                e.preventDefault();
+                document.querySelector('[data-page="expense"]').click();
+            }
+            
+            // Ctrl+1 切换到业务合计页签
+            if (e.ctrlKey && e.key === '1') {
+                e.preventDefault();
+                document.querySelector('[data-tab="business-total"]').click();
+            }
+            
+            // Ctrl+2 切换到整车业务页签
+            if (e.ctrlKey && e.key === '2') {
+                e.preventDefault();
+                document.querySelector('[data-tab="vehicle-business"]').click();
+            }
+            
+            // Ctrl+3 切换到对外合作业务页签
+            if (e.ctrlKey && e.key === '3') {
+                e.preventDefault();
+                document.querySelector('[data-tab="cooperation-business"]').click();
+            }
+        });
+        
+        // 更新时间的全局函数
+        function updateDateTime() {
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).replace(/\//g, '-');
+            
+            const dateElement = document.querySelector('.data-time');
+            if (dateElement) {
+                dateElement.textContent = `数据更新时间: ${formattedDate}`;
+            }
+        }
+
+        // 注册Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

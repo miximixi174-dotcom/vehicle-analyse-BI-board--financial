@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉利汽车综合竞争力分析看板 (2025上半年财报数据)</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --geli-blue: #1B3A8D;
+            --geli-light-blue: #2E4EA1;
+            --geli-accent-blue: #4A6FC1;
+            --geli-bg: #F5F7FA;
+            --card-bg: #ffffff;
+            --shadow-light: rgba(27, 58, 141, 0.08);
+            --shadow-medium: rgba(27, 58, 141, 0.12);
+            --text-primary: #1B3A8D;
+            --text-secondary: #5f6368;
+            --text-tertiary: #7f8c8d;
+            --border-color: rgba(27, 58, 141, 0.1);
+            --byd-green: #2ecc71;
+            --tesla-red: #e74c3c;
+            --changan-blue: #3B82F6;
+            --seres-purple: #9b59b6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --formula-bg: #f8fafc;
+            --formula-border: #e2e8f0;
+            --industry-benchmark: #FF6B6B;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: var(--geli-bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 20px;
+            min-height: 100vh;
+            letter-spacing: 0.3px;
+        }
+        
+        /* 主容器 - 自适应屏幕大小 */
+        .dashboard-container {
+            max-width: 1920px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* 顶部标题区域 */
+        .header {
+            background: linear-gradient(135deg, var(--geli-blue) 0%, var(--geli-light-blue) 100%);
+            border-radius: 16px;
+            padding: 25px 35px;
+            color: white;
+            box-shadow: 0 10px 30px var(--shadow-medium);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .header::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(27, 58, 141, 0.2) 0%, transparent 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            position: relative;
+            z-index: 10;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+            line-height: 1.3;
+            position: relative;
+            z-index: 10;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 关键指标行 */
+        .key-metrics-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            height: 140px;
+        }
+        
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 15px;
+            box-shadow: 0 8px 25px var(--shadow-light);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px var(--shadow-medium);
+        }
+        
+        .metric-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--geli-blue), var(--geli-light-blue));
+        }
+        
+        .metric-value {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--geli-blue);
+            line-height: 1;
+            margin: 5px 0;
+            text-align: center;
+            letter-spacing: -1px;
+        }
+        
+        .metric-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.2;
+            margin-top: 5px;
+        }
+        
+        .metric-change {
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 4px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            width: fit-content;
+            margin: 0 auto;
+        }
+        
+        .metric-change.positive {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .metric-change.negative {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .metric-change.neutral {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--changan-blue);
+        }
+        
+        /* 主内容区域 - 2x2网格布局 */
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            min-height: 600px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+            
+            .key-metrics-row {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(2, 1fr);
+                height: 280px;
+            }
+        }
+        
+        /* 图表卡片通用样式 */
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 8px 25px var(--shadow-light);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px var(--shadow-medium);
+        }
+        
+        .chart-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--geli-blue), var(--geli-light-blue));
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            min-height: 60px;
+            position: relative;
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--geli-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.3;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            padding-right: 150px;
+        }
+        
+        .card-title::before {
+            content: "";
+            width: 6px;
+            height: 20px;
+            background: var(--geli-blue);
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        
+        .card-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-tertiary);
+            font-weight: 400;
+            line-height: 1.4;
+            margin-top: 4px;
+            word-wrap: break-word;
+        }
+        
+        /* 图表容器 - 统一比例 */
+        .chart-container {
+            flex: 1;
+            position: relative;
+            min-height: 300px;
+        }
+        
+        /* 散点图区域 - 左上 */
+        .scatter-plot {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        
+        #scatterChart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 柱状图区域 - 右上 */
+        .bar-chart {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        #barChart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 雷达图区域 - 左下 */
+        .radar-chart {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        
+        #radarChart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 财务健康度条形图区域 - 右下 */
+        .health-bar-chart {
+            grid-column: 2;
+            grid-row: 2;
+            position: relative;
+        }
+        
+        /* 条形图容器样式 */
+        .bar-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #healthBarChart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 下拉选择框 */
+        .selector-container {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+        
+        .indicator-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            width: 140px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+        
+        .indicator-select:hover {
+            border-color: var(--geli-blue);
+            box-shadow: 0 2px 8px rgba(27, 58, 141, 0.15);
+        }
+        
+        .indicator-select:focus {
+            border-color: var(--geli-blue);
+            box-shadow: 0 0 0 2px rgba(27, 58, 141, 0.1);
+        }
+        
+        /* 行业基准值显示 */
+        .benchmark-value {
+            position: absolute;
+            top: 15px;
+            right: 170px;
+            background: linear-gradient(135deg, var(--industry-benchmark) 0%, #FF8E8E 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+            z-index: 10;
+        }
+        
+        /* 计算公式区域 */
+        .formula-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            background: white;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .formula-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--geli-blue);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .formula-title::before {
+            content: "📊";
+            font-size: 12px;
+        }
+        
+        .formula-content {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        .formula-item {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        
+        .formula-item:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .formula-equation {
+            background: rgba(27, 58, 141, 0.05);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border-left: 3px solid var(--geli-blue);
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--text-primary);
+            margin: 4px 0;
+        }
+        
+        .formula-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        /* 自定义滚动条 */
+        .formula-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .formula-container::-webkit-scrollbar-track {
+            background: rgba(27, 58, 141, 0.05);
+            border-radius: 2px;
+        }
+        
+        .formula-container::-webkit-scrollbar-thumb {
+            background: rgba(27, 58, 141, 0.2);
+            border-radius: 2px;
+        }
+        
+        .formula-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(27, 58, 141, 0.3);
+        }
+        
+        /* 底部图例区域 */
+        .footer {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 18px 30px;
+            box-shadow: 0 8px 25px var(--shadow-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+            min-height: 80px;
+        }
+        
+        .legend-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .company-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .geli-highlight {
+            background: linear-gradient(135deg, var(--geli-blue) 25%, var(--geli-light-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+        
+        .last-updated {
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .dashboard-container {
+                gap: 12px;
+            }
+            
+            .header {
+                padding: 20px;
+                min-height: auto;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+                line-height: 1.2;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .key-metrics-row {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+                height: auto;
+                gap: 12px;
+            }
+            
+            .metric-card {
+                padding: 15px 10px;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+            
+            .metric-label {
+                font-size: 0.9rem;
+            }
+            
+            .metric-change {
+                font-size: 0.85rem;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                min-height: auto;
+            }
+            
+            .scatter-plot, .bar-chart, .radar-chart, .health-bar-chart {
+                grid-column: 1;
+                grid-row: auto;
+            }
+            
+            .footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                height: auto;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                min-height: auto;
+            }
+            
+            .card-title {
+                font-size: 1.1rem;
+                padding-right: 0;
+            }
+            
+            .formula-container {
+                max-height: 180px;
+                padding: 12px;
+                position: relative;
+            }
+            
+            .indicator-select {
+                width: 120px;
+                font-size: 11px;
+                padding: 5px 8px;
+                position: relative;
+                margin-top: 5px;
+            }
+            
+            .selector-container {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .benchmark-value {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-top: 10px;
+                width: fit-content;
+            }
+            
+            .chart-container {
+                min-height: 280px;
+            }
+        }
+        
+        /* 小屏幕手机调整 */
+        @media (max-width: 480px) {
+            .key-metrics-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .metric-card {
+                padding: 15px;
+            }
+            
+            .metric-value {
+                font-size: 2.2rem;
+            }
+            
+            .metric-label {
+                font-size: 1rem;
+            }
+            
+            .formula-container {
+                max-height: 160px;
+                padding: 12px;
+            }
+            
+            .indicator-select {
+                width: 120px;
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+            
+            .benchmark-value {
+                font-size: 12px;
+                padding: 4px 10px;
+            }
+            
+            .chart-container {
+                min-height: 250px;
+            }
+        }
+        
+        /* 大屏幕优化 */
+        @media (min-width: 1600px) {
+            .dashboard-container {
+                max-width: 95%;
+            }
+            
+            .main-content {
+                min-height: 800px;
+            }
+            
+            .chart-container {
+                min-height: 380px;
+            }
+            
+            .key-metrics-row {
+                height: 150px;
+            }
+            
+            .metric-card {
+                padding: 25px 20px;
+            }
+            
+            .metric-value {
+                font-size: 3rem;
+            }
+        }
+        
+        /* 加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .chart-card {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .scatter-plot { animation-delay: 0.1s; }
+        .bar-chart { animation-delay: 0.2s; }
+        .radar-chart { animation-delay: 0.3s; }
+        .health-bar-chart { animation-delay: 0.4s; }
+        
+        /* 关键指标卡片动画 */
+        .metric-card {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        
+        .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metric-card:nth-child(2) { animation-delay: 0.15s; }
+        .metric-card:nth-child(3) { animation-delay: 0.2s; }
+        .metric-card:nth-child(4) { animation-delay: 0.25s; }
+        .metric-card:nth-child(5) { animation-delay: 0.3s; }
+        .metric-card:nth-child(6) { animation-delay: 0.35s; }
+        
+        /* 字体优化 */
+        .echarts-axis-label, 
+        .echarts-legend-text,
+        .echarts-tooltip {
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            letter-spacing: 0.2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 顶部标题区域 -->
+        <div class="header">
+            <h1>吉利汽车综合竞争力分析看板 (2025上半年财报)</h1>
+            <div class="subtitle">基于2025上半年财务表现、运营效率与行业竞争的多维度评估</div>
+        </div>
+        
+        <!-- 关键指标行 -->
+        <div class="key-metrics-row">
+            <div class="metric-card">
+                <div class="metric-label">总营收</div>
+                <div class="metric-value">1,503</div>
+                <div class="metric-change positive">+16.5% YoY</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">净利润</div>
+                <div class="metric-value">85.6</div>
+                <div class="metric-change positive">+22.3% YoY</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">毛利率</div>
+                <div class="metric-value">16.4%</div>
+                <div class="metric-change positive">+1.1% YoY</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">资产负债率</div>
+                <div class="metric-value">58.0%</div>
+                <div class="metric-change negative">-0.8% YoY</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">研发投入</div>
+                <div class="metric-value">73.6</div>
+                <div class="metric-change positive">+18.7% YoY</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">总销量</div>
+                <div class="metric-value">140.9</div>
+                <div class="metric-change positive">+12.4% YoY</div>
+            </div>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 散点图区域 -->
+            <div class="chart-card scatter-plot">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">📈 行业竞争对手经营指标演变 (2023-2025H1)</div>
+                        <div class="card-subtitle">横轴:销量(万辆) | 纵轴:毛利率 | 气泡大小:营业收入</div>
+                    </div>
+                    <div style="color: var(--text-tertiary); font-size: 0.85rem;">点击时间轴切换年份/时期</div>
+                </div>
+                <div class="chart-container">
+                    <div id="scatterChart"></div>
+                </div>
+            </div>
+            
+            <!-- 柱状图区域 -->
+            <div class="chart-card bar-chart">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">📊 行业竞争对手资金管理指标对比 (2025上半年)</div>
+                        <div class="card-subtitle">资本开支强度、研发投入强度与资本化比例</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div id="barChart"></div>
+                </div>
+            </div>
+            
+            <!-- 雷达图区域 -->
+            <div class="chart-card radar-chart">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">🎯 行业竞争对手运营效率雷达图 (2025上半年)</div>
+                        <div class="card-subtitle">销售费用率、管理费用率、研发费用率、渠道盈利比例、应收账款周转天数、单车边际贡献</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div id="radarChart"></div>
+                </div>
+            </div>
+            
+            <!-- 财务健康度条形图区域 -->
+            <div class="chart-card health-bar-chart">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">⚙️ 财务健康度指标对比 (2025上半年)</div>
+                        <div class="card-subtitle">五家车企关键财务指标对比与行业基准线</div>
+                    </div>
+                    
+                    <!-- 右上角下拉选择框 -->
+                    <div class="selector-container">
+                        <select class="indicator-select" id="indicatorSelect">
+                            <option value="应付账款周转天数" selected>应付账款周转天数</option>
+                            <option value="资产负债率">资产负债率</option>
+                            <option value="利息保障倍数">利息保障倍数</option>
+                            <option value="流动比率">流动比率</option>
+                            <option value="速动比率">速动比率</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 右上角行业基准值显示 -->
+                    <div class="benchmark-value" id="benchmarkValue">行业基准: 55.4天</div>
+                </div>
+                
+                <!-- 条形图可视化区域 -->
+                <div class="bar-container">
+                    <div id="healthBarChart"></div>
+                </div>
+                
+                <!-- 底部计算公式区域 -->
+                <div class="formula-container">
+                    <div class="formula-title" id="formulaTitle">应付账款周转天数计算公式</div>
+                    <div class="formula-content" id="formulaContent">
+                        <!-- 计算公式内容将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部图例区域 -->
+        <div class="footer">
+            <div class="legend-container">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--geli-blue);"></div>
+                    <div class="company-name"><span class="geli-highlight">吉利汽车</span></div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--byd-green);"></div>
+                    <div class="company-name">比亚迪</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--tesla-red);"></div>
+                    <div class="company-name">特斯拉</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--changan-blue);"></div>
+                    <div class="company-name">长安汽车</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--seres-purple);"></div>
+                    <div class="company-name">赛力斯</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--industry-benchmark);"></div>
+                    <div class="company-name" style="color: var(--industry-benchmark); font-weight: 700;">行业基准线</div>
+                </div>
+            </div>
+            <div class="last-updated">吉利数据更新时间: 2025年8月 (2025中期报告) | 数据来源: 吉利汽车财报及行业分析</div>
+        </div>
+    </div>
+
+    <script>
+        // 公司颜色配置（吉利汽车使用格力蓝主题色）
+        const companyColors = {
+            "吉利汽车": "#1B3A8D",
+            "比亚迪": "#2ecc71",
+            "特斯拉": "#e74c3c",
+            "长安汽车": "#3B82F6",
+            "赛力斯": "#9b59b6"
+        };
+
+        // ==================== 五家企业财务健康度指标数据 ====================
+        const financialHealthData = {
+            "应付账款周转天数": {
+                values: {
+                    "吉利汽车": 58,
+                    "比亚迪": 62,
+                    "特斯拉": 42,
+                    "长安汽车": 45,
+                    "赛力斯": 70
+                },
+                unit: "天",
+                formula: "应付账款周转天数 = (平均应付账款余额 / 采购成本) × 360",
+                description: "反映企业对供应商的付款周期，天数长代表议价能力强，但过长可能影响供应链关系",
+                benchmark: 55.4 // 行业基准值（五家企业平均值）
+            },
+            "资产负债率": {
+                values: {
+                    "吉利汽车": 58,
+                    "比亚迪": 65,
+                    "特斯拉": 40,
+                    "长安汽车": 55,
+                    "赛力斯": 75
+                },
+                unit: "%",
+                formula: "资产负债率 = (负债总额 / 资产总额) × 100%",
+                description: "衡量企业财务杠杆和偿债风险，反映债务融资比例",
+                benchmark: 58.6 // 行业基准值（五家企业平均值）
+            },
+            "利息保障倍数": {
+                values: {
+                    "吉利汽车": 6.5,
+                    "比亚迪": 8.0,
+                    "特斯拉": 15.0,
+                    "长安汽车": 5.0,
+                    "赛力斯": 3.0
+                },
+                unit: "倍",
+                formula: "利息保障倍数 = 息税前利润(EBIT) / 利息费用",
+                description: "反映企业偿付利息的能力，倍数越高偿债能力越强",
+                benchmark: 7.5 // 行业基准值（五家企业平均值）
+            },
+            "流动比率": {
+                values: {
+                    "吉利汽车": 1.6,
+                    "比亚迪": 1.5,
+                    "特斯拉": 2.0,
+                    "长安汽车": 1.4,
+                    "赛力斯": 1.2
+                },
+                unit: "",
+                formula: "流动比率 = 流动资产 / 流动负债",
+                description: "衡量短期偿债能力，反映企业用流动资产偿还短期债务的能力",
+                benchmark: 1.54 // 行业基准值（五家企业平均值）
+            },
+            "速动比率": {
+                values: {
+                    "吉利汽车": 1.1,
+                    "比亚迪": 1.0,
+                    "特斯拉": 1.5,
+                    "长安汽车": 0.9,
+                    "赛力斯": 0.8
+                },
+                unit: "",
+                formula: "速动比率 = (流动资产 - 存货) / 流动负债",
+                description: "更严格的短期偿债能力指标，排除存货变现能力差的影响",
+                benchmark: 1.06 // 行业基准值（五家企业平均值）
+            }
+        };
+        
+        // ==================== 图表自适应函数 ====================
+        function calculateChartDimensions() {
+            const chartContainer = document.querySelector('.chart-container');
+            if (!chartContainer) return { width: '100%', height: '100%' };
+            
+            const containerWidth = chartContainer.clientWidth;
+            const containerHeight = chartContainer.clientHeight;
+            
+            // 计算合适的图表尺寸，保持比例
+            const width = containerWidth;
+            const height = Math.max(300, containerHeight * 0.9); // 确保最小高度
+            
+            return { width, height };
+        }
+        
+        // ==================== 1. 散点图配置 ====================
+        function initScatterChart() {
+            const scatterDom = document.getElementById('scatterChart');
+            const scatterChart = echarts.init(scatterDom);
+            
+            const mockData = {
+                timeline: ['2023', '2025上半年'],
+                counties: ['吉利汽车', '比亚迪', '特斯拉', '长安汽车', '赛力斯'],
+                series: [
+                    // 2023年数据 [销量, 毛利率, 营业收入, 公司名称]
+                    [
+                        [168, 15.3, 1792, '吉利汽车'],
+                        [302, 20.2, 6023, '比亚迪'],
+                        [181, 18.2, 6900, '特斯拉'],
+                        [255.3, 18.5, 1513, '长安汽车'],
+                        [10, 16.0, 358, '赛力斯']
+                    ],
+                    // 2025上半年数据 [销量, 毛利率, 营业收入, 公司名称]
+                    [
+                        [140.9, 16.4, 1503, '吉利汽车'],
+                        [480, 18.5, 3500, '比亚迪'],
+                        [95, 17.0, 3800, '特斯拉'],
+                        [138.5, 19.2, 810, '长安汽车'],
+                        [8, 12.5, 200, '赛力斯']
+                    ]
+                ]
+            };
+            
+            const sizeFunction = function (x) {
+                const y = Math.sqrt(x / 50) + 2;
+                return y * 5;
+            };
+            
+            const schema = [
+                { name: 'Sales', index: 0, text: '年销量', unit: '万辆' },
+                { name: 'Margin', index: 1, text: '毛利率', unit: '%' },
+                { name: 'Revenue', index: 2, text: '营业收入', unit: '亿元' },
+                { name: 'Company', index: 3, text: '车企', unit: '' }
+            ];
+            
+            const getScatterOption = () => {
+                const dimensions = calculateChartDimensions();
+                const isSmallScreen = window.innerWidth < 768;
+                
+                return {
+                    baseOption: {
+                        timeline: {
+                            axisType: 'category',
+                            orient: 'vertical',
+                            autoPlay: true,
+                            inverse: true,
+                            playInterval: 2000,
+                            left: null,
+                            right: 5,
+                            top: 20,
+                            bottom: 20,
+                            width: 50,
+                            height: null,
+                            symbol: 'none',
+                            checkpointStyle: { borderWidth: 2 },
+                            controlStyle: { showNextBtn: false, showPrevBtn: false },
+                            label: {
+                                fontSize: isSmallScreen ? 9 : 11,
+                                color: '#666',
+                                fontWeight: 'normal'
+                            },
+                            data: []
+                        },
+                        title: [
+                            {
+                                text: mockData.timeline[0],
+                                textAlign: 'center',
+                                left: '63%',
+                                top: '45%',
+                                textStyle: {
+                                    fontSize: isSmallScreen ? 40 : 70,
+                                    color: 'rgba(27, 58, 141, 0.08)',
+                                    fontWeight: 'bold'
+                                }
+                            }
+                        ],
+                        tooltip: {
+                            padding: isSmallScreen ? 8 : 12,
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderColor: '#ccc',
+                            borderWidth: 1,
+                            textStyle: { fontSize: isSmallScreen ? 10 : 12, lineHeight: 1.4 },
+                            formatter: function (obj) {
+                                const value = obj.value;
+                                return '<div style="font-weight:bold; font-size:13px; margin-bottom:6px; color: ' + companyColors[value[3]] + '">' + value[3] + '</div>'
+                                    + schema[0].text + '：<b>' + value[0] + '</b>' + schema[0].unit + '<br>'
+                                    + schema[1].text + '：<b>' + value[1] + '</b>' + schema[1].unit + '<br>'
+                                    + schema[2].text + '：<b>' + value[2] + '</b>' + schema[2].unit;
+                            }
+                        },
+                        grid: {
+                            top: isSmallScreen ? 60 : 75,
+                            containLabel: true,
+                            left: isSmallScreen ? 50 : 65,
+                            right: isSmallScreen ? 60 : 80,
+                            bottom: isSmallScreen ? 25 : 30
+                        },
+                        xAxis: {
+                            type: 'value',
+                            name: '年销量',
+                            nameLocation: 'middle',
+                            nameGap: isSmallScreen ? 20 : 25,
+                            min: 0,
+                            max: 500,
+                            nameTextStyle: {
+                                fontSize: isSmallScreen ? 10 : 12,
+                                fontWeight: 'bold',
+                                color: '#333'
+                            },
+                            splitLine: {
+                                show: true,
+                                lineStyle: { 
+                                    type: 'dashed',
+                                    color: '#e0e0e0'
+                                }
+                            },
+                            axisLabel: {
+                                fontSize: isSmallScreen ? 9 : 10,
+                                color: '#666',
+                                formatter: function(value) {
+                                    return value + '万辆';
+                                }
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '毛利率',
+                            min: 5,
+                            max: 30,
+                            nameTextStyle: {
+                                fontSize: isSmallScreen ? 10 : 12,
+                                fontWeight: 'bold',
+                                color: '#333'
+                            },
+                            splitLine: {
+                                show: true,
+                                lineStyle: { 
+                                    type: 'dashed',
+                                    color: '#e0e0e0'
+                                }
+                            },
+                            axisLabel: {
+                                fontSize: isSmallScreen ? 9 : 10,
+                                color: '#666',
+                                formatter: '{value}%'
+                            }
+                        },
+                        visualMap: [
+                            {
+                                show: !isSmallScreen,
+                                type: 'piecewise',
+                                dimension: 3,
+                                categories: mockData.counties,
+                                left: 10,
+                                top: 20,
+                                textStyle: { 
+                                    fontSize: isSmallScreen ? 9 : 10,
+                                    color: '#333'
+                                },
+                                inRange: {
+                                    color: [
+                                        companyColors["吉利汽车"],
+                                        companyColors["比亚迪"],
+                                        companyColors["特斯拉"],
+                                        companyColors["长安汽车"],
+                                        companyColors["赛力斯"]
+                                    ]
+                                }
+                            }
+                        ],
+                        series: [
+                            {
+                                type: 'scatter',
+                                itemStyle: {
+                                    opacity: 0.8,
+                                    shadowBlur: 8,
+                                    shadowColor: 'rgba(0, 0, 0, 0.2)'
+                                },
+                                data: mockData.series[0],
+                                symbolSize: function (val) {
+                                    return sizeFunction(val[2]);
+                                },
+                                label: {
+                                    show: !isSmallScreen,
+                                    formatter: function(param) {
+                                        return param.value[3];
+                                    },
+                                    position: 'top',
+                                    fontSize: isSmallScreen ? 9 : 10,
+                                    fontWeight: 'bold',
+                                    color: '#333',
+                                    padding: [2, 4],
+                                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                                    borderWidth: 1,
+                                    borderRadius: 3
+                                }
+                            }
+                        ],
+                        animationDurationUpdate: 1000,
+                        animationEasingUpdate: 'quinticInOut'
+                    },
+                    options: []
+                };
+            };
+            
+            let option = getScatterOption();
+            
+            for (let n = 0; n < mockData.timeline.length; n++) {
+                option.baseOption.timeline.data.push(mockData.timeline[n]);
+                option.options.push({
+                    title: {
+                        show: true,
+                        text: mockData.timeline[n] + ''
+                    },
+                    series: {
+                        name: mockData.timeline[n],
+                        type: 'scatter',
+                        itemStyle: {
+                            opacity: 0.8,
+                            shadowBlur: 8,
+                            shadowColor: 'rgba(0, 0, 0, 0.2)'
+                        },
+                        data: mockData.series[n],
+                        symbolSize: function (val) {
+                            return sizeFunction(val[2]);
+                        },
+                        label: {
+                            show: window.innerWidth >= 768,
+                            formatter: function(param) {
+                                return param.value[3];
+                            },
+                            position: 'top',
+                            fontSize: window.innerWidth < 768 ? 9 : 10,
+                            fontWeight: 'bold',
+                            color: '#333',
+                            padding: [2, 4],
+                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                            borderWidth: 1,
+                            borderRadius: 3
+                        }
+                    }
+                });
+            }
+            
+            scatterChart.setOption(option);
+            return scatterChart;
+        }
+        
+        // ==================== 2. 柱状图配置 ====================
+        function initBarChart() {
+            const barDom = document.getElementById('barChart');
+            const barChart = echarts.init(barDom);
+            
+            const barChartData = {
+                indicators: ["资本开支强度", "研发投入强度", "资本化比例"],
+                units: ["%", "%", "%"],
+                companies: ["吉利汽车", "比亚迪", "特斯拉", "长安汽车", "赛力斯"],
+                colors: [
+                    companyColors["吉利汽车"],
+                    companyColors["比亚迪"],
+                    companyColors["特斯拉"],
+                    companyColors["长安汽车"],
+                    companyColors["赛力斯"]
+                ],
+                data: [
+                    [5.2, 4.9, 35],
+                    [7.5, 4.5, 42],
+                    [8.0, 5.2, 38],
+                    [6.8, 4.3, 40],
+                    [11.0, 6.8, 45]
+                ]
+            };
+            
+            const getBarOption = () => {
+                const isSmallScreen = window.innerWidth < 768;
+                
+                const series = barChartData.indicators.map((metric, index) => {
+                    return {
+                        name: metric,
+                        type: 'bar',
+                        data: barChartData.companies.map((company, companyIndex) => ({
+                            value: barChartData.data[companyIndex][index],
+                            itemStyle: {
+                                color: barChartData.colors[companyIndex],
+                                borderRadius: [3, 3, 0, 0],
+                                opacity: company === "吉利汽车" ? 1 : 0.9
+                            }
+                        })),
+                        barWidth: isSmallScreen ? '14%' : '18%',
+                        barGap: '30%',
+                        barCategoryGap: '40%',
+                        emphasis: {
+                            itemStyle: {
+                                shadowColor: 'rgba(0, 0, 0, 0.5)',
+                                shadowBlur: 10
+                            }
+                        },
+                        label: {
+                            show: !isSmallScreen,
+                            position: 'top',
+                            formatter: function(params) {
+                                return params.value + '%';
+                            },
+                            fontSize: isSmallScreen ? 9 : 10,
+                            fontWeight: 'bold'
+                        }
+                    };
+                });
+                
+                return {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' },
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#ccc',
+                        borderWidth: 1,
+                        textStyle: { fontSize: isSmallScreen ? 10 : 11 },
+                        formatter: function(params) {
+                            let result = `<div style="font-weight: bold; margin-bottom: 5px; color: ${params[0].color}">${params[0].name}</div>`;
+                            params.forEach(param => {
+                                const value = param.value + '%';
+                                result += `
+                                <div style="display: flex; align-items: center; margin: 5px 0;">
+                                    <div style="width: 10px; height: 10px; background: ${param.color}; border-radius: 50%; margin-right: 8px;"></div>
+                                    <div>${param.seriesName}: <span style="font-weight: bold;">${value}</span></div>
+                                </div>`;
+                            });
+                            return result;
+                        }
+                    },
+                    legend: {
+                        data: barChartData.indicators,
+                        top: 10,
+                        textStyle: {
+                            fontSize: isSmallScreen ? 10 : 11,
+                            fontWeight: 'bold',
+                            color: '#1B3A8D'
+                        },
+                        type: 'scroll',
+                        pageTextStyle: { fontSize: 9 }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: isSmallScreen ? '15%' : '10%',
+                        top: isSmallScreen ? '25%' : '20%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: barChartData.companies,
+                        axisLabel: {
+                            fontSize: isSmallScreen ? 10 : 11,
+                            fontWeight: 'bold',
+                            color: '#1B3A8D',
+                            interval: 0
+                        },
+                        axisLine: {
+                            lineStyle: { color: '#cbd5e1' }
+                        },
+                        axisTick: { alignWithLabel: true }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '百分比 (%)',
+                        nameTextStyle: {
+                            fontSize: isSmallScreen ? 10 : 11,
+                            padding: [0, 0, 0, 10],
+                            color: '#1B3A8D'
+                        },
+                        axisLabel: {
+                            formatter: '{value}%',
+                            fontSize: isSmallScreen ? 9 : 10,
+                            color: '#666'
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                type: 'dashed',
+                                color: '#e2e8f0'
+                            }
+                        }
+                    },
+                    series: series
+                };
+            };
+            
+            barChart.setOption(getBarOption());
+            return barChart;
+        }
+        
+        // ==================== 3. 雷达图配置 ====================
+        function initRadarChart() {
+            const radarDom = document.getElementById('radarChart');
+            const radarChart = echarts.init(radarDom);
+            
+            const radarChartData = {
+                indicators: [
+                    { name: '销售费用率', max: 15 },
+                    { name: '管理费用率', max: 10 },
+                    { name: '研发费用率', max: 8 },
+                    { name: '渠道盈利比例', max: 30 },
+                    { name: '应收账款周转天数', max: 90 },
+                    { name: '单车边际贡献', max: 10 }
+                ],
+                companies: {
+                    "吉利汽车": [5.6, 1.9, 4.9, 22.0, 58, 3.2],
+                    "比亚迪": [6.5, 2.5, 4.5, 26.0, 50, 3.8],
+                    "特斯拉": [6.0, 2.0, 5.2, 30.0, 40, 5.5],
+                    "长安汽车": [4.8, 2.3, 4.3, 24.5, 45, 2.6],
+                    "赛力斯": [13.0, 6.0, 6.8, 18.0, 75, 1.8]
+                }
+            };
+            
+            const getRadarOption = () => {
+                const isSmallScreen = window.innerWidth < 768;
+                const isVerySmallScreen = window.innerWidth < 480;
+                
+                return {
+                    tooltip: {
+                        trigger: 'item',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#ccc',
+                        borderWidth: 1,
+                        textStyle: { fontSize: isSmallScreen ? 10 : 11 },
+                        formatter: function(params) {
+                            const company = params.name;
+                            const values = radarChartData.companies[company];
+                            let html = `<div style="font-weight:bold; color: ${params.color}; margin-bottom:6px;">${company}</div>`;
+                            radarChartData.indicators.forEach((indicator, index) => {
+                                let value = values[index];
+                                let unit = '';
+                                if (indicator.name.includes('率') || indicator.name.includes('比例')) {
+                                    unit = '%';
+                                    value = value.toFixed(1);
+                                } else if (indicator.name.includes('天数')) {
+                                    unit = '天';
+                                } else if (indicator.name.includes('单车边际贡献')) {
+                                    unit = '万元/辆';
+                                    value = value.toFixed(1);
+                                }
+                                html += `<div style="margin: 3px 0;">${indicator.name}: <span style="font-weight: bold;">${value}${unit}</span></div>`;
+                            });
+                            return html;
+                        }
+                    },
+                    legend: {
+                        data: Object.keys(radarChartData.companies),
+                        top: 10,
+                        textStyle: { 
+                            fontSize: isSmallScreen ? 10 : 11,
+                            fontWeight: 'bold'
+                        },
+                        type: 'scroll',
+                        pageTextStyle: { fontSize: 9 }
+                    },
+                    radar: {
+                        indicator: radarChartData.indicators,
+                        shape: 'polygon',
+                        radius: isVerySmallScreen ? '50%' : (isSmallScreen ? '60%' : '65%'),
+                        center: ['50%', '55%'],
+                        axisName: {
+                            fontSize: isVerySmallScreen ? 8 : (isSmallScreen ? 9 : 10),
+                            color: '#666',
+                            formatter: function(name, indicator) {
+                                if (isVerySmallScreen && name.length > 4) {
+                                    return name.substring(0, 4) + '..';
+                                } else if (isSmallScreen && name.length > 5) {
+                                    return name.substring(0, 5);
+                                }
+                                return name;
+                            },
+                            padding: [3, 5]
+                        },
+                        splitArea: {
+                            areaStyle: {
+                                color: ['rgba(27, 58, 141, 0.05)', 'rgba(27, 58, 141, 0.08)']
+                            }
+                        },
+                        splitLine: {
+                            lineStyle: { color: 'rgba(27, 58, 141, 0.1)' }
+                        },
+                        axisLine: {
+                            lineStyle: { color: 'rgba(27, 58, 141, 0.2)' }
+                        }
+                    },
+                    series: [
+                        {
+                            type: 'radar',
+                            data: Object.entries(radarChartData.companies).map(([company, values]) => ({
+                                name: company,
+                                value: values,
+                                itemStyle: { color: companyColors[company] },
+                                lineStyle: {
+                                    width: company === "吉利汽车" ? 3 : 2,
+                                    color: companyColors[company],
+                                    opacity: company === "吉利汽车" ? 1 : 0.7
+                                },
+                                areaStyle: {
+                                    color: companyColors[company],
+                                    opacity: company === "吉利汽车" ? 0.2 : 0.05
+                                },
+                                symbol: 'circle',
+                                symbolSize: isSmallScreen ? 4 : 5
+                            }))
+                        }
+                    ]
+                };
+            };
+            
+            radarChart.setOption(getRadarOption());
+            return radarChart;
+        }
+        
+        // ==================== 4. 财务健康度条形图配置 ====================
+        function initHealthBarChart() {
+            const barDom = document.getElementById('healthBarChart');
+            const barChart = echarts.init(barDom);
+            
+            let currentIndicator = "应付账款周转天数";
+            let currentData = financialHealthData[currentIndicator];
+            const companies = ["吉利汽车", "比亚迪", "特斯拉", "长安汽车", "赛力斯"];
+            
+            function updateFormulaDisplay(indicator) {
+                const data = financialHealthData[indicator];
+                const formulaTitle = document.getElementById('formulaTitle');
+                const formulaContent = document.getElementById('formulaContent');
+                
+                formulaTitle.textContent = `${indicator}计算公式`;
+                
+                const html = `
+                    <div class="formula-item">
+                        <div class="formula-equation">${data.formula}</div>
+                        <div class="formula-desc">${data.description}</div>
+                    </div>
+                `;
+                
+                formulaContent.innerHTML = html;
+            }
+            
+            function updateBenchmarkDisplay(indicator) {
+                const data = financialHealthData[indicator];
+                const benchmarkValue = document.getElementById('benchmarkValue');
+                
+                let displayValue = data.benchmark;
+                let unit = data.unit;
+                
+                if (unit === "天") {
+                    benchmarkValue.textContent = `行业基准: ${displayValue.toFixed(1)}${unit}`;
+                } else if (unit === "%") {
+                    benchmarkValue.textContent = `行业基准: ${displayValue.toFixed(1)}${unit}`;
+                } else if (unit === "倍") {
+                    benchmarkValue.textContent = `行业基准: ${displayValue.toFixed(1)}${unit}`;
+                } else {
+                    benchmarkValue.textContent = `行业基准: ${displayValue.toFixed(2)}`;
+                }
+            }
+            
+            function updateHealthBarChart(indicator) {
+                const data = financialHealthData[indicator];
+                const isSmallScreen = window.innerWidth < 768;
+                
+                updateBenchmarkDisplay(indicator);
+                
+                const barData = companies.map(company => ({
+                    name: company,
+                    value: data.values[company],
+                    itemStyle: {
+                        color: companyColors[company],
+                        borderRadius: [3, 3, 0, 0],
+                        opacity: company === "吉利汽车" ? 1 : 0.9
+                    }
+                }));
+                
+                const benchmarkData = companies.map(() => data.benchmark);
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' },
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#ccc',
+                        borderWidth: 1,
+                        textStyle: { fontSize: isSmallScreen ? 10 : 11 },
+                        formatter: function(params) {
+                            let result = '';
+                            params.forEach(param => {
+                                if (param.seriesName === '行业基准线') {
+                                    result += `<div style="display: flex; align-items: center; margin: 5px 0;">
+                                        <div style="width: 10px; height: 10px; background: ${param.color}; border-radius: 50%; margin-right: 8px;"></div>
+                                        <div>${param.seriesName}: <span style="font-weight: bold; color: ${param.color};">${param.value}${data.unit}</span></div>
+                                    </div>`;
+                                } else {
+                                    const company = param.name;
+                                    const value = param.value;
+                                    const unit = data.unit;
+                                    const isAboveBenchmark = value > data.benchmark;
+                                    const diff = value - data.benchmark;
+                                    const diffText = diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1);
+                                    const diffColor = isAboveBenchmark ? '#ef4444' : '#10b981';
+                                    
+                                    result += `<div style="font-weight: bold; margin-bottom: 5px; color: ${param.color}">${company}</div>
+                                    <div style="display: flex; align-items: center; margin: 5px 0;">
+                                        <div style="width: 10px; height: 10px; background: ${param.color}; border-radius: 50%; margin-right: 8px;"></div>
+                                        <div>${indicator}: <span style="font-weight: bold;">${value}${unit}</span></div>
+                                    </div>
+                                    <div style="font-size: 10px; color: ${diffColor};">较行业基准: ${diffText}${unit} (${isAboveBenchmark ? '高于' : '低于'}基准)</div>`;
+                                }
+                            });
+                            return result;
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: isSmallScreen ? '20%' : '12%',
+                        top: isSmallScreen ? '20%' : '15%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: companies,
+                        axisLabel: {
+                            fontSize: isSmallScreen ? 10 : 11,
+                            fontWeight: 'bold',
+                            color: '#1B3A8D',
+                            interval: 0,
+                            formatter: function(value) {
+                                if (value === "吉利汽车") {
+                                    return '{b|' + value + '}';
+                                }
+                                return value;
+                            },
+                            rich: {
+                                b: {
+                                    color: '#1B3A8D',
+                                    fontWeight: 'bold',
+                                    fontSize: isSmallScreen ? 10 : 12
+                                }
+                            }
+                        },
+                        axisLine: { lineStyle: { color: '#cbd5e1' } },
+                        axisTick: { alignWithLabel: true }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: indicator + (data.unit ? ` (${data.unit})` : ''),
+                        nameTextStyle: {
+                            fontSize: isSmallScreen ? 10 : 11,
+                            padding: [0, 0, 0, 10],
+                            color: '#1B3A8D'
+                        },
+                        axisLabel: {
+                            fontSize: isSmallScreen ? 9 : 10,
+                            color: '#666',
+                            formatter: function(value) {
+                                if (data.unit === '%') {
+                                    return value + '%';
+                                } else if (data.unit === '天') {
+                                    return value + '天';
+                                } else if (data.unit === '倍') {
+                                    return value + '倍';
+                                }
+                                return value;
+                            }
+                        },
+                        splitLine: {
+                            lineStyle: { type: 'dashed', color: '#e2e8f0' }
+                        }
+                    },
+                    series: [
+                        {
+                            name: indicator,
+                            type: 'bar',
+                            data: barData,
+                            barWidth: isSmallScreen ? '50%' : '60%',
+                            emphasis: {
+                                itemStyle: {
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)',
+                                    shadowBlur: 10
+                                }
+                            },
+                            label: {
+                                show: !isSmallScreen,
+                                position: 'top',
+                                formatter: function(params) {
+                                    return params.value + (data.unit || '');
+                                },
+                                fontSize: isSmallScreen ? 9 : 10,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        {
+                            name: '行业基准线',
+                            type: 'line',
+                            data: benchmarkData,
+                            symbol: 'none',
+                            lineStyle: {
+                                color: '#FF6B6B',
+                                width: 2,
+                                type: 'dashed'
+                            },
+                            markLine: {
+                                silent: true,
+                                lineStyle: {
+                                    color: '#FF6B6B',
+                                    width: 1,
+                                    type: 'dashed'
+                                },
+                                data: [ { yAxis: data.benchmark, label: { show: false } } ]
+                            },
+                            label: { show: false }
+                        }
+                    ]
+                };
+                
+                barChart.setOption(option);
+            }
+            
+            updateFormulaDisplay(currentIndicator);
+            updateHealthBarChart(currentIndicator);
+            
+            document.getElementById('indicatorSelect').addEventListener('change', function() {
+                currentIndicator = this.value;
+                currentData = financialHealthData[currentIndicator];
+                updateHealthBarChart(currentIndicator);
+                updateFormulaDisplay(currentIndicator);
+            });
+            
+            return barChart;
+        }
+        
+        // ==================== 初始化所有图表 ====================
+        function initAllCharts() {
+            const charts = [];
+            
+            charts.push(initScatterChart());
+            charts.push(initBarChart());
+            charts.push(initRadarChart());
+            charts.push(initHealthBarChart());
+            
+            // 响应窗口大小变化
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    charts.forEach(chart => {
+                        if (chart && typeof chart.resize === 'function') {
+                            chart.resize();
+                            // 重新设置选项以适应新尺寸
+                            if (chart.id === 'scatterChart') {
+                                chart.setOption(getScatterOption());
+                            } else if (chart.id === 'barChart') {
+                                chart.setOption(getBarOption());
+                            } else if (chart.id === 'radarChart') {
+                                chart.setOption(getRadarOption());
+                            }
+                        }
+                    });
+                }, 200);
+            });
+            
+            return charts;
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', initAllCharts);
+    </script>
+</body>
+</html>

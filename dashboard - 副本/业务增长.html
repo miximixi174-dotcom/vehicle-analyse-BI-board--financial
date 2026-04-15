@@ -1,0 +1,3126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉利汽车收入增长全景看板 - 品牌维度分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/map/js/china.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --geli-blue: #1B3A8D;
+            --geli-light-blue: #2E4EA1;
+            --geli-accent-blue: #4A6FC1;
+            --geli-bg: #F5F7FA;
+            --card-bg: #ffffff;
+            --shadow-light: rgba(27, 58, 141, 0.08);
+            --shadow-medium: rgba(27, 58, 141, 0.12);
+            --text-primary: #1B3A8D;
+            --text-secondary: #5f6368;
+            --text-tertiary: #7f8c8d;
+            --border-color: rgba(27, 58, 141, 0.1);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --formula-bg: #f8fafc;
+            --formula-border: #e2e8f0;
+            --industry-benchmark: #FF6B6B;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: var(--geli-bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 20px;
+            min-height: 100vh;
+            letter-spacing: 0.3px;
+        }
+        
+        /* 主容器 */
+        .dashboard-container {
+            max-width: 1920px;
+            margin: 0 auto;
+            min-height: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* 顶部标题区域 */
+        .header {
+            background: linear-gradient(135deg, var(--geli-blue) 0%, var(--geli-light-blue) 100%);
+            border-radius: 16px;
+            padding: 20px 30px;
+            color: white;
+            box-shadow: 0 10px 30px var(--shadow-medium);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .header::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(27, 58, 141, 0.2) 0%, transparent 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            position: relative;
+            z-index: 10;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 300;
+            line-height: 1.3;
+            position: relative;
+            z-index: 10;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 关键指标卡片行 - 5列 */
+        .key-indicators {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            height: 110px;
+            flex-shrink: 0;
+        }
+        
+        .key-indicator-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 5px 15px var(--shadow-light);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .key-indicator-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px var(--shadow-medium);
+        }
+        
+        .key-indicator-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--geli-blue), var(--geli-light-blue));
+        }
+        
+        .key-indicator-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--geli-blue);
+            line-height: 1;
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(27, 58, 141, 0.1);
+        }
+        
+        .key-indicator-value.positive {
+            color: var(--success-color);
+        }
+        
+        .key-indicator-value.negative {
+            color: var(--danger-color);
+        }
+        
+        .key-indicator-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        .key-indicator-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: 3px;
+            font-weight: 400;
+        }
+        
+        /* 主内容区域 - 2x2网格布局，保留电脑大小样式 */
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            min-height: 500px;
+            max-height: 650px;
+        }
+        
+        /* 图表卡片通用样式 */
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 5px 15px var(--shadow-light);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px var(--shadow-medium);
+        }
+        
+        .chart-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--geli-blue), var(--geli-light-blue));
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            min-height: 50px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--geli-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.3;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .card-title::before {
+            content: "";
+            width: 5px;
+            height: 18px;
+            background: var(--geli-blue);
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            font-weight: 400;
+            line-height: 1.4;
+            margin-top: 3px;
+            word-wrap: break-word;
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            flex: 1;
+            position: relative;
+            min-height: 250px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 5px;
+        }
+        
+        /* 自定义滚动条样式 */
+        .chart-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chart-container::-webkit-scrollbar-track {
+            background: rgba(27, 58, 141, 0.05);
+            border-radius: 3px;
+        }
+        
+        .chart-container::-webkit-scrollbar-thumb {
+            background: rgba(27, 58, 141, 0.2);
+            border-radius: 3px;
+        }
+        
+        .chart-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(27, 58, 141, 0.3);
+        }
+        
+        /* ECharts图表容器 */
+        .chart-container > div {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 280px;
+        }
+        
+        /* 模块一：新车型上市日历 - 左上 */
+        .market-overview-chart {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        
+        /* 模块二：收入多维度分析 - 右上（原营销资源模块改名后移至此） */
+        .marketing-resources-chart {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        /* 模块三：销量多维度分析 - 左下（原模块二移至此） */
+        .revenue-analysis-chart {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        
+        /* 模块四：价格体系与折扣分析 - 右下（原模块三移至此） */
+        .price-system-chart {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        
+        /* 右上角下拉选择框 */
+        .card-dropdown {
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 10;
+        }
+        
+        .chart-select {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+            background: white;
+            color: var(--text-primary);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s ease;
+            min-width: 150px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-select:hover {
+            border-color: var(--geli-blue);
+            box-shadow: 0 5px 12px rgba(27, 58, 141, 0.15);
+        }
+        
+        /* 底部图例区域 */
+        .footer {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px 25px;
+            box-shadow: 0 5px 15px var(--shadow-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            border: 1px solid var(--border-color);
+            height: 70px;
+            flex-shrink: 0;
+        }
+        
+        .legend-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .company-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .geli-highlight {
+            background: linear-gradient(135deg, var(--geli-blue) 25%, var(--geli-light-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+        
+        .last-updated {
+            color: var(--text-tertiary);
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+        
+        /* 加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .chart-card {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .key-indicator-card {
+            animation: fadeInUp 0.4s ease forwards;
+        }
+        
+        .market-overview-chart { animation-delay: 0.1s; }
+        .marketing-resources-chart { animation-delay: 0.2s; }
+        .revenue-analysis-chart { animation-delay: 0.3s; }
+        .price-system-chart { animation-delay: 0.4s; }
+        
+        /* 字体优化 */
+        .echarts-axis-label, 
+        .echarts-legend-text,
+        .echarts-tooltip {
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            letter-spacing: 0.2px;
+        }
+        
+        /* 异常提示样式 */
+        .anomaly-indicator {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--danger-color);
+            margin-left: 4px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* 新车型上市日历样式 */
+        .timeline-container {
+            position: relative;
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+        
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 0;
+            position: relative;
+            min-width: 800px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #dce6f0;
+            z-index: 1;
+        }
+        
+        .month-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+        }
+        
+        .month-marker {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--geli-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 35px;
+            box-shadow: 0 2px 4px rgba(0, 114, 198, 0.2);
+        }
+        
+        .month-label {
+            position: absolute;
+            top: 55px;
+            color: #5a6c7d;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        
+        .models-area {
+            margin-top: 80px;
+            position: relative;
+        }
+        
+        .models-list {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 0;
+            min-width: 800px;
+        }
+        
+        .month-models {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 8px;
+            min-height: 150px;
+        }
+        
+        .model-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            width: 100%;
+            max-width: 90px;
+            padding: 4px 0;
+        }
+        
+        .car-icon {
+            color: var(--geli-blue);
+            font-size: 12px;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        
+        .model-name {
+            color: #333;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 模块二：销量多维度分析图表容器 */
+        .sales-chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sales-chart-item {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sales-chart-item.active {
+            opacity: 1;
+            visibility: visible;
+            position: relative;
+        }
+        
+        /* 销量整体分析样式 */
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 6px 15px;
+            border-radius: 6px;
+            border: none;
+            background-color: #eef1f6;
+            font-size: 12px;
+            font-weight: 500;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #e0e5ee;
+        }
+        
+        .btn.active {
+            background-color: var(--geli-blue);
+            color: white;
+            box-shadow: 0 4px 8px rgba(27, 58, 141, 0.2);
+        }
+        
+        /* 悬浮窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-container {
+            width: 90%;
+            height: 90%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #003399 0%, #0055cc 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .modal-subtitle {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+        
+        .close-modal {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .modal-content {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+        
+        /* 车型销量分布悬浮窗内容 */
+        .sales-modal-content {
+            padding: 20px;
+        }
+        
+        .model-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .model-selector label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .model-selector select {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #333;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            min-width: 160px;
+        }
+        
+        #modal-chart {
+            width: 100%;
+            height: 600px;
+        }
+        
+        /* 新增：品牌销量下钻按钮样式 */
+        .drill-down-btn {
+            padding: 6px 15px;
+            border-radius: 6px;
+            border: 2px solid var(--geli-blue);
+            background-color: white;
+            color: var(--geli-blue);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+        }
+        
+        .drill-down-btn:hover {
+            background-color: var(--geli-blue);
+            color: white;
+            box-shadow: 0 4px 8px rgba(27, 58, 141, 0.2);
+        }
+        
+        /* 模块一的按钮容器，现在包含年份下拉和销量下钻 */
+        .module1-buttons {
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        /* 年份下拉框样式 */
+        .year-select {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+            background: white;
+            color: var(--text-primary);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            min-width: 90px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .year-select:hover {
+            border-color: var(--geli-blue);
+        }
+        
+        /* 适配模块一的样式 */
+        .new-timeline-container {
+            position: relative;
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            padding-top: 10px;
+        }
+        
+        .new-timeline {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 0;
+            position: relative;
+            min-width: 900px;
+        }
+        
+        .new-timeline::before {
+            content: '';
+            position: absolute;
+            top: 35px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #dce6f0;
+            z-index: 1;
+        }
+        
+        .new-month-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+        }
+        
+        .new-month-marker {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: var(--geli-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 4px rgba(0, 114, 198, 0.2);
+        }
+        
+        .new-month-label {
+            color: #5a6c7d;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            margin-top: 2px;
+        }
+        
+        .new-models-area {
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .new-models-list {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 0;
+            min-width: 900px;
+        }
+        
+        .new-month-models {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 8px;
+            min-height: 120px;
+        }
+        
+        .new-model-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            width: 100%;
+            max-width: 85px;
+            padding: 3px 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .new-model-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        
+        .new-car-icon {
+            color: var(--geli-blue);
+            font-size: 10px;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+        
+        .new-model-name {
+            color: #333;
+            font-size: 10px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .new-timeline-footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #8895a7;
+            font-size: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eef2f7;
+        }
+        
+        /* 滚动条样式 */
+        .new-timeline-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .new-timeline-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .new-timeline-container::-webkit-scrollbar-thumb {
+            background: #c1d7ed;
+            border-radius: 3px;
+        }
+        
+        .new-timeline-container::-webkit-scrollbar-thumb:hover {
+            background: #a0c2e6;
+        }
+        
+        /* 车型销量分布悬浮窗样式 */
+        .model-sales-modal-content {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .model-sales-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 饼图下拉框样式，与年份下拉框保持一致（已删除下拉框，但保留样式备用） */
+        .pie-select {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+            background: white;
+            color: var(--text-primary);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            min-width: 90px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        .pie-select:hover {
+            border-color: var(--geli-blue);
+        }
+        .pie-select-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 2px;
+            padding-right: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 顶部标题区域 -->
+        <div class="header">
+            <h1>吉利汽车收入增长全景看板 </h1>
+            <div class="subtitle">基于品牌维度的销量、收入、价格与营销效率综合分析</div>
+        </div>
+        
+        <!-- 关键指标卡片行 -->
+        <div class="key-indicators">
+            <div class="key-indicator-card">
+                <div class="key-indicator-value">1,782,500辆</div>
+                <div class="key-indicator-name">销量</div>
+                <div class="key-indicator-subtitle">同比增长 +22.3%</div>
+            </div>
+            <div class="key-indicator-card">
+                <div class="key-indicator-value positive">1,780,000辆</div>
+                <div class="key-indicator-name">发运量</div>
+                <div class="key-indicator-subtitle">同比增长 +32.3%</div>
+            </div>
+            <div class="key-indicator-card">
+                <div class="key-indicator-value">¥1,500亿</div>
+                <div class="key-indicator-name">营业收入</div>
+                <div class="key-indicator-subtitle">同比增长 +18.7%</div>
+            </div>
+            <div class="key-indicator-card">
+                <div class="key-indicator-value">22.4%</div>
+                <div class="key-indicator-name">海外市场收入占比</div>
+                <div class="key-indicator-subtitle">同比增长 +57%</div>
+            </div>
+            <div class="key-indicator-card">
+                <div class="key-indicator-value positive">58.6%</div>
+                <div class="key-indicator-name">新能源占比</div>
+                <div class="key-indicator-subtitle">同比 +15.4%</div>
+            </div>
+        </div>
+        
+        <!-- 主内容区域 - 顺序：1.新车型上市日历 2.收入多维度分析 3.销量多维度分析 4.价格体系与折扣分析 -->
+        <div class="main-content">
+            <!-- 模块一：新车型上市日历（增加年份切换） -->
+            <div class="chart-card market-overview-chart">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">新车型上市日历</div>
+                        <div class="card-subtitle" id="marketSubtitle">吉利汽车2023年度上市车型分布</div>
+                    </div>
+                    
+                    <div class="module1-buttons">
+                        <select class="year-select" id="yearSelect">
+                            <option value="2021">2021</option>
+                            <option value="2022">2022</option>
+                            <option value="2023" selected>2023</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                        </select>
+                        <button class="drill-down-btn" id="modelSalesDrillBtn">
+                            <i class="fas fa-chart-bar"></i> 车型销量下钻
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div id="marketOverviewChart">
+                        <div class="new-timeline-container">
+                            <div class="new-timeline" id="new-timeline"></div>
+                            <div class="new-models-area">
+                                <div class="new-models-list" id="new-models-list"></div>
+                            </div>
+                            <div class="new-timeline-footer">
+                                <p>© 2023 吉利汽车 Geely Auto • 上市时间仅供参考，具体以官方发布为准</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模块二：收入多维度分析（原营销资源模块，已替换为收入多维度图表） -->
+            <div class="chart-card marketing-resources-chart">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">💰 收入多维度分析</div>
+                        <div class="card-subtitle" id="marketingSubtitle">营业收入预算/实际及增长率分析</div>
+                    </div>
+                    
+                    <div class="card-dropdown">
+                        <select class="chart-select" id="marketingSelect">
+                            <option value="growth">收入增长分析</option>
+                            <option value="structure">收入结构堆积</option>
+                            <option value="brandPie">品牌占比</option>
+                            <option value="regionPie">区域占比</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="chart-container" id="marketingResourcesChart"></div>
+            </div>
+            
+            <!-- 模块三：销量多维度分析（原模块二） -->
+            <div class="chart-card revenue-analysis-chart">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">销量多维度分析</div>
+                        <div class="card-subtitle" id="revenueSubtitle">选择不同维度查看销量分析</div>
+                    </div>
+                    
+                    <div class="card-dropdown">
+                        <select class="chart-select" id="revenueSelect">
+                            <option value="overall">销量整体分析</option>
+                            <option value="region">分区域销量构成</option>
+                            <option value="brand">分品牌销量分析</option>
+                            <option value="model">分车系销量分析</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="sales-chart-wrapper">
+                        <div class="sales-chart-item active" id="overall-sales">
+                            <div class="button-container">
+                                <button class="btn active" id="vehicleBtn">整车销量趋势</button>
+                                <button class="btn" id="oemBtn">代工销量趋势</button>
+                            </div>
+                            <div id="overallChart" style="width: 100%; height: 400px;"></div>
+                        </div>
+                        <div class="sales-chart-item" id="region-sales">
+                            <div id="regionChart" style="width: 100%; height: 480px;"></div>
+                        </div>
+                        <div class="sales-chart-item" id="brand-sales">
+                            <div id="brandChart" style="width: 100%; height: 480px;"></div>
+                        </div>
+                        <div class="sales-chart-item" id="model-sales">
+                            <div id="modelChart" style="width: 100%; height: 480px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模块四：价格体系与折扣分析（包含五个选项） -->
+            <div class="chart-card price-system-chart">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">📉 价格体系与折扣分析</div>
+                        <div class="card-subtitle" id="priceSubtitle">平均价格 - 分品牌线</div>
+                    </div>
+                    
+                    <!-- 下拉选择器（包含全部五个选项） -->
+                    <div class="card-dropdown">
+                        <select class="chart-select" id="priceMainSelect">
+                            <option value="brand">平均价格 - 分品牌线</option>
+                            <option value="series">平均价格 - 分车系</option>
+                            <option value="model">平均价格 - 分车型</option>
+                            <option value="heatmap">热力图 (车型-月均成交价)</option>
+                            <option value="overlap">价格重叠分析</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 单个图表容器 -->
+                <div class="chart-container" id="priceMainChart"></div>
+            </div>
+        </div>
+        
+        <!-- 底部图例区域 -->
+        <div class="footer">
+            <div class="legend-container">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--geli-blue);"></div>
+                    <div class="company-name"><span class="geli-highlight">吉利汽车</span></div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FF6B6B;"></div>
+                    <div class="company-name">领克</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #10b981;"></div>
+                    <div class="company-name">几何</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f59e0b;"></div>
+                    <div class="company-name">极氪</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--success-color);"></div>
+                    <div class="company-name">高配车型</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #6B8CE0;"></div>
+                    <div class="company-name">低配车型</div>
+                </div>
+            </div>
+            <div class="last-updated">数据更新时间: 2025年8月 (2025中期报告) | 数据来源: 吉利汽车财报及行业分析</div>
+        </div>
+    </div>
+
+    <!-- 预算执行表悬浮窗 -->
+    <div id="budgetModal" class="modal-overlay" style="display: none;">
+        <div class="modal-container" style="width: 95%; max-width: 1100px;">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">吉利汽车品牌预算执行表 (单位:亿元)</div>
+                    <div class="modal-subtitle">预算执行情况明细</div>
+                </div>
+                <button class="close-modal" onclick="closeBudgetModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="budget-modal-content" id="budget-modal-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 车型销量分布悬浮窗 -->
+    <div id="modelSalesModal" class="modal-overlay" style="display: none;">
+        <div class="modal-container" style="width: 95%; height: 95%; max-width: 1400px;">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">吉利汽车各车型销量分析</div>
+                    <div class="modal-subtitle">2025年上半年各省销量分布与同比增长数据</div>
+                </div>
+                <button class="close-modal" onclick="closeModelSalesModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content model-sales-modal-content">
+                <iframe class="model-sales-iframe" id="modelSalesIframe" srcdoc=""></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局变量 ====================
+        let overallChart = null;
+        let regionChart = null;
+        let brandChart = null;
+        let modelChart = null;
+        let marketingChart = null;  // 模块二图表实例
+        let priceMainChart = null;   // 模块四主图表实例
+        
+        // ==================== 关键指标动态更新 ====================
+        function updateKeyIndicators() {
+            const indicators = [
+                { value: '1,782,500辆', name: '总销量', subtitle: '同比增长 +22.3%', className: '' },
+                { value: '1,780,000辆', name: '发运量', subtitle: '净利率 8.2%', className: 'positive' },
+                { value: '¥1,500亿', name: '集团总收入', subtitle: '同比增长 +18.7%', className: '' },
+                { value: '22.4%', name: '海外收入占比', subtitle: '同比增长 ＋57%', className: '' },
+                { value: '58.6%', name: '新能源占比', subtitle: '同比 +15.4%', className: 'positive' }
+            ];
+            
+            setInterval(() => {
+                const cards = document.querySelectorAll('.key-indicator-card');
+                cards.forEach((card, index) => {
+                    if (Math.random() > 0.7 && index < indicators.length) {
+                        const indicator = indicators[index];
+                        const valueEl = card.querySelector('.key-indicator-value');
+                        const nameEl = card.querySelector('.key-indicator-name');
+                        const subtitleEl = card.querySelector('.key-indicator-subtitle');
+                        
+                        valueEl.style.transform = 'scale(1.1)';
+                        setTimeout(() => { valueEl.style.transform = 'scale(1)'; }, 300);
+                        
+                        valueEl.textContent = indicator.value;
+                        valueEl.className = `key-indicator-value ${indicator.className}`;
+                        nameEl.textContent = indicator.name;
+                        subtitleEl.textContent = indicator.subtitle;
+                    }
+                });
+            }, 5000);
+        }
+        
+        // ==================== 模块一：新车型上市日历 ====================
+        function initMarketOverviewChart() {
+            const carModelNames = [
+                "星瑞", "星越L", "星越S", "博越L", "博越COOL", 
+                "帝豪", "帝豪L", "帝豪S", "缤瑞COOL", "缤越COOL",
+                "豪越L", "远景X6", "远景X3", "熊猫MINI", "熊猫骑士",
+                "银河L7", "银河L6", "银河E8", "领克03", "领克05",
+                "领克06", "领克08", "领克09", "极氪001", "极氪009",
+                "极氪X", "几何A", "几何C", "几何E", "几何G6",
+                "睿蓝7", "睿蓝9", "枫叶80V", "枫叶60S", "远程星享V",
+                "远程锋锐F3E", "雷达RD6", "沃尔沃XC40", "沃尔沃S60", "沃尔沃S90"
+            ];
+            
+            const months = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+            
+            function getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            
+            function generateMonthlyModels() {
+                const monthlyModels = [];
+                for (let month = 1; month <= 12; month++) {
+                    const modelCount = getRandomInt(2, 6);
+                    const shuffledModels = [...carModelNames].sort(() => 0.5 - Math.random());
+                    for (let i = 0; i < modelCount; i++) {
+                        monthlyModels.push({ name: shuffledModels[i], month: month, icon: "fas fa-car" });
+                    }
+                }
+                return monthlyModels;
+            }
+            
+            const carModels = generateMonthlyModels();
+            
+            function initTimeline() {
+                const timeline = document.getElementById('new-timeline');
+                timeline.innerHTML = '';
+                months.forEach((month, index) => {
+                    const monthContainer = document.createElement('div');
+                    monthContainer.className = 'new-month-container';
+                    const monthMarker = document.createElement('div');
+                    monthMarker.className = 'new-month-marker';
+                    monthMarker.textContent = index + 1;
+                    const monthLabel = document.createElement('div');
+                    monthLabel.className = 'new-month-label';
+                    monthLabel.textContent = month;
+                    monthContainer.appendChild(monthMarker);
+                    monthContainer.appendChild(monthLabel);
+                    timeline.appendChild(monthContainer);
+                });
+            }
+            
+            function renderModelsByMonth() {
+                const modelsList = document.getElementById('new-models-list');
+                modelsList.innerHTML = '';
+                for (let month = 1; month <= 12; month++) {
+                    const monthModelsContainer = document.createElement('div');
+                    monthModelsContainer.className = 'new-month-models';
+                    monthModelsContainer.id = `new-month-${month}-models`;
+                    const monthModels = carModels.filter(model => model.month === month);
+                    monthModels.forEach(model => {
+                        const modelItem = document.createElement('div');
+                        modelItem.className = 'new-model-item';
+                        modelItem.dataset.modelName = model.name;
+                        modelItem.innerHTML = `<div class="new-car-icon"><i class="${model.icon}"></i></div><div class="new-model-name">${model.name}</div>`;
+                        modelItem.addEventListener('click', function() {
+                            showModelSalesModal(this.dataset.modelName);
+                        });
+                        monthModelsContainer.appendChild(modelItem);
+                    });
+                    modelsList.appendChild(monthModelsContainer);
+                }
+            }
+            
+            initTimeline();
+            renderModelsByMonth();
+            
+            const yearSelect = document.getElementById('yearSelect');
+            yearSelect.addEventListener('change', function(e) {
+                document.getElementById('marketSubtitle').innerText = `吉利汽车${e.target.value}年度上市车型分布（展示为2023年数据）`;
+            });
+            
+            return null;
+        }
+        
+        // ==================== 车型销量分布悬浮窗功能 ====================
+        const modelSalesHtml = `
+            <!DOCTYPE html>
+            <html lang="zh-CN">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>吉利汽车各车型销量分布图</title>
+                <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"><\/script>
+                <script src="https://cdn.jsdelivr.net/npm/echarts/map/js/china.js"><\/script>
+                <style>
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    
+                    body {
+                        font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+                        background-color: #f8f9fa;
+                        padding: 12px;
+                    }
+                    
+                    .container {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                        background: white;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+                        overflow: hidden;
+                    }
+                    
+                    .header {
+                        background: linear-gradient(135deg, #003399 0%, #0055cc 100%);
+                        color: white;
+                        padding: 16px 20px;
+                        border-radius: 8px 8px 0 0;
+                    }
+                    
+                    .header h1 {
+                        font-size: 18px;
+                        font-weight: 700;
+                        margin-bottom: 4px;
+                    }
+                    
+                    .header .subtitle {
+                        font-size: 11px;
+                        opacity: 0.9;
+                        font-weight: 400;
+                        margin-bottom: 12px;
+                    }
+                    
+                    .model-selector {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        margin-top: 12px;
+                    }
+                    
+                    .model-selector label {
+                        font-size: 12px;
+                        font-weight: 500;
+                    }
+                    
+                    .model-selector select {
+                        background: rgba(255, 255, 255, 0.15);
+                        border: 1px solid rgba(255, 255, 255, 0.4);
+                        color: white;
+                        padding: 6px 12px;
+                        border-radius: 5px;
+                        font-size: 12px;
+                        cursor: pointer;
+                        min-width: 160px;
+                        transition: all 0.2s ease;
+                    }
+                    
+                    .model-selector select:hover {
+                        background: rgba(255, 255, 255, 0.25);
+                    }
+                    
+                    .model-selector select:focus {
+                        outline: none;
+                        border-color: white;
+                        background: rgba(255, 255, 255, 0.3);
+                    }
+                    
+                    .model-selector select option {
+                        background: #003399;
+                        color: white;
+                    }
+                    
+                    .model-info {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        background: #f8f9fa;
+                        padding: 10px 15px;
+                        margin: 0 15px 10px 15px;
+                        border-radius: 6px;
+                        border-left: 3px solid #003399;
+                        font-size: 11px;
+                    }
+                    
+                    .model-details {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    
+                    .model-icon {
+                        font-size: 20px;
+                    }
+                    
+                    .model-name {
+                        font-size: 15px;
+                        font-weight: 700;
+                        color: #003399;
+                    }
+                    
+                    .model-desc {
+                        font-size: 11px;
+                        color: #666;
+                        max-width: 450px;
+                        line-height: 1.3;
+                    }
+                    
+                    .model-price {
+                        background: white;
+                        padding: 4px 10px;
+                        border-radius: 14px;
+                        font-size: 11px;
+                        border: 1px solid #ddd;
+                        color: #333;
+                        white-space: nowrap;
+                    }
+                    
+                    .stats-container {
+                        display: grid;
+                        grid-template-columns: repeat(4, 1fr);
+                        gap: 10px;
+                        padding: 0 15px 10px 15px;
+                    }
+                    
+                    .stat-card {
+                        background: #f8f9fa;
+                        padding: 10px;
+                        border-radius: 6px;
+                        text-align: center;
+                        border: 1px solid #eaeaea;
+                    }
+                    
+                    .stat-value {
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #003399;
+                        margin-bottom: 3px;
+                    }
+                    
+                    .stat-label {
+                        font-size: 10px;
+                        color: #666;
+                        margin-bottom: 5px;
+                    }
+                    
+                    .stat-change {
+                        font-size: 10px;
+                        padding: 2px 6px;
+                        border-radius: 8px;
+                        display: inline-block;
+                    }
+                    
+                    .change-positive {
+                        background: rgba(40, 167, 69, 0.1);
+                        color: #28a745;
+                    }
+                    
+                    .change-negative {
+                        background: rgba(220, 53, 69, 0.1);
+                        color: #dc3545;
+                    }
+                    
+                    .chart-container {
+                        width: 100%;
+                        height: 620px;
+                        padding: 12px;
+                    }
+                    
+                    .legend-container {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 20px;
+                        padding: 10px;
+                        background: #f8f9fa;
+                        border-top: 1px solid #eaeaea;
+                        flex-wrap: wrap;
+                    }
+                    
+                    .legend-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        font-size: 11px;
+                    }
+                    
+                    .legend-color {
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 2px;
+                    }
+                    
+                    .footer {
+                        text-align: center;
+                        padding: 10px;
+                        color: #666;
+                        font-size: 10px;
+                        border-top: 1px solid #eaeaea;
+                    }
+                    
+                    @media (max-width: 768px) {
+                        .stats-container {
+                            grid-template-columns: repeat(2, 1fr);
+                        }
+                        
+                        .model-info {
+                            flex-direction: column;
+                            gap: 10px;
+                        }
+                        
+                        .model-details {
+                            flex-direction: column;
+                            text-align: center;
+                            gap: 6px;
+                        }
+                        
+                        .model-desc {
+                            max-width: 100%;
+                        }
+                        
+                        .legend-container {
+                            flex-direction: column;
+                            gap: 6px;
+                        }
+                        
+                        .chart-container {
+                            height: 500px;
+                        }
+                    }
+                    
+                    @media (max-width: 480px) {
+                        .stats-container {
+                            grid-template-columns: 1fr;
+                        }
+                        
+                        .chart-container {
+                            height: 400px;
+                        }
+                        
+                        .header {
+                            padding: 12px 15px;
+                        }
+                        
+                        .header h1 {
+                            font-size: 16px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>吉利汽车各车型销量分析</h1>
+                        <div class="subtitle">2025年上半年各省销量分布与同比增长数据</div>
+                        
+                        <div class="model-selector">
+                            <label for="model-select">选择车型：</label>
+                            <select id="model-select">
+                                <option value="star-rail">星瑞 (Star Rail)</option>
+                                <option value="star-l">星越L (Star L)</option>
+                                <option value="boyue-l">博越L (Boyue L)</option>
+                                <option value="emgrand-l">帝豪L (Emgrand L)</option>
+                                <option value="geometry-a">几何A (Geometry A)</option>
+                                <option value="zeekr-001">极氪001 (Zeekr 001)</option>
+                                <option value="lynk-03">领克03 (Lynk & Co 03)</option>
+                                <option value="yizhen-x">翼真X (Yizhen X)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="model-info">
+                        <div class="model-details">
+                            <div class="model-icon">🚗</div>
+                            <div>
+                                <div class="model-name">星瑞</div>
+                                <div class="model-desc">吉利CMA平台旗舰轿车，搭载2.0TD发动机，定位A+级轿车市场</div>
+                            </div>
+                        </div>
+                        <div class="model-price">指导价: 11.37-14.57万元</div>
+                    </div>
+                    
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-value">85,640</div>
+                            <div class="stat-label">全国总销量(辆)</div>
+                            <div class="stat-change change-positive">+15.6%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">4.2%</div>
+                            <div class="stat-label">细分市场份额</div>
+                            <div class="stat-change change-positive">+0.8%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">25</div>
+                            <div class="stat-label">重点监控城市</div>
+                            <div class="stat-label">TOP10占比42%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">31</div>
+                            <div class="stat-label">覆盖省份/直辖市</div>
+                            <div class="stat-label">覆盖率96.8%</div>
+                        </div>
+                    </div>
+                    
+                    <div id="chart-container" class="chart-container"></div>
+                    
+                    <div class="legend-container">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #28a745;"></div>
+                            <span>增长率 ≥ 20%</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #20c997;"></div>
+                            <span>增长率 10-20%</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #17a2b8;"></div>
+                            <span>增长率 0-10%</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #dc3545;"></div>
+                            <span>负增长</span>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        数据来源：吉利汽车官方销售数据 | 更新时间：2025年7月15日 | 可视化技术支持：ECharts
+                    </div>
+                </div>
+
+                <script>
+                    // 初始化ECharts实例
+                    const chartDom = document.getElementById('chart-container');
+                    const myChart = echarts.init(chartDom);
+                    
+                    // 各车型的数据配置
+                    const modelData = {
+                        'star-rail': {
+                            name: '星瑞',
+                            desc: '吉利CMA平台旗舰轿车，搭载2.0TD发动机，定位A+级轿车市场',
+                            price: '指导价: 11.37-14.57万元',
+                            totalSales: 85640,
+                            growthRate: 15.6,
+                            marketShare: 4.2,
+                            marketShareChange: 0.8,
+                            keyCities: 25,
+                            color: '#003399',
+                            icon: '🚗'
+                        },
+                        'star-l': {
+                            name: '星越L',
+                            desc: '吉利CMA平台旗舰SUV，搭载Drive-E系列2.0TD发动机，定位紧凑型SUV市场',
+                            price: '指导价: 13.72-18.52万元',
+                            totalSales: 92450,
+                            growthRate: 22.3,
+                            marketShare: 5.1,
+                            marketShareChange: 1.2,
+                            keyCities: 28,
+                            color: '#28a745',
+                            icon: '🚙'
+                        },
+                        'boyue-l': {
+                            name: '博越L',
+                            desc: '基于CMA架构打造的全新SUV，搭载雷神混动系统，定位紧凑型SUV市场',
+                            price: '指导价: 12.57-17.07万元',
+                            totalSales: 78620,
+                            growthRate: 18.7,
+                            marketShare: 3.9,
+                            marketShareChange: 0.6,
+                            keyCities: 26,
+                            color: '#6f42c1',
+                            icon: '🚙'
+                        },
+                        'emgrand-l': {
+                            name: '帝豪L',
+                            desc: '吉利经典家轿系列，搭载1.4T发动机，主打高性价比家用轿车市场',
+                            price: '指导价: 9.39-10.99万元',
+                            totalSales: 112350,
+                            growthRate: 8.9,
+                            marketShare: 6.8,
+                            marketShareChange: 0.3,
+                            keyCities: 31,
+                            color: '#fd7e14',
+                            icon: '🚗'
+                        },
+                        'geometry-a': {
+                            name: '几何A',
+                            desc: '吉利旗下纯电动轿车，续航里程最高600km，主打时尚科技纯电出行',
+                            price: '指导价: 12.68-20.78万元',
+                            totalSales: 65420,
+                            growthRate: 35.2,
+                            marketShare: 3.2,
+                            marketShareChange: 1.5,
+                            keyCities: 22,
+                            color: '#20c997',
+                            icon: '⚡'
+                        },
+                        'zeekr-001': {
+                            name: '极氪001',
+                            desc: '吉利旗下高端智能电动猎装车，搭载高性能电机，续航最高732km',
+                            price: '指导价: 26.90-76.90万元',
+                            totalSales: 52340,
+                            growthRate: 42.8,
+                            marketShare: 2.6,
+                            marketShareChange: 1.8,
+                            keyCities: 18,
+                            color: '#0dcaf0',
+                            icon: '🚘'
+                        },
+                        'lynk-03': {
+                            name: '领克03',
+                            desc: '领克品牌紧凑型轿车，搭载Drive-E系列发动机，主打运动性能',
+                            price: '指导价: 13.68-25.68万元',
+                            totalSales: 68750,
+                            growthRate: 19.4,
+                            marketShare: 3.4,
+                            marketShareChange: 0.9,
+                            keyCities: 24,
+                            color: '#000000',
+                            icon: '🏎️'
+                        },
+                        'yizhen-x': {
+                            name: '翼真X',
+                            desc: '吉利旗下高端新能源MPV，主打豪华电动MPV市场，提供高端商务出行解决方案',
+                            price: '指导价: 35.98-68.98万元',
+                            totalSales: 32450,
+                            growthRate: 65.3,
+                            marketShare: 1.8,
+                            marketShareChange: 1.2,
+                            keyCities: 16,
+                            color: '#6f42c1',
+                            icon: '🚌'
+                        }
+                    };
+                    
+                    // 模拟各省销量数据生成函数
+                    function generateProvinceSales(modelId) {
+                        const baseData = [
+                            { name: '广东', baseValue: 12560, baseGrowth: 15.6, keyCities: ['广州', '深圳', '东莞'] },
+                            { name: '浙江', baseValue: 9870, baseGrowth: 22.4, keyCities: ['杭州', '宁波', '温州'] },
+                            { name: '江苏', baseValue: 11020, baseGrowth: 8.7, keyCities: ['南京', '苏州', '无锡'] },
+                            { name: '山东', baseValue: 8560, baseGrowth: 12.9, keyCities: ['济南', '青岛', '烟台'] },
+                            { name: '河南', baseValue: 7450, baseGrowth: 18.2, keyCities: ['郑州', '洛阳', '南阳'] },
+                            { name: '四川', baseValue: 6920, baseGrowth: 25.3, keyCities: ['成都', '绵阳', '宜宾'] },
+                            { name: '河北', baseValue: 6120, baseGrowth: 5.4, keyCities: ['石家庄', '保定', '唐山'] },
+                            { name: '湖北', baseValue: 5890, baseGrowth: 14.8, keyCities: ['武汉', '襄阳', '宜昌'] },
+                            { name: '湖南', baseValue: 5670, baseGrowth: 19.7, keyCities: ['长沙', '株洲', '衡阳'] },
+                            { name: '安徽', baseValue: 5340, baseGrowth: 21.5, keyCities: ['合肥', '芜湖', '安庆'] },
+                            { name: '福建', baseValue: 4980, baseGrowth: 16.3, keyCities: ['福州', '厦门', '泉州'] },
+                            { name: '江西', baseValue: 4670, baseGrowth: 13.4, keyCities: ['南昌', '赣州', '九江'] },
+                            { name: '陕西', baseValue: 4320, baseGrowth: 9.8, keyCities: ['西安', '宝鸡', '咸阳'] },
+                            { name: '山西', baseValue: 3890, baseGrowth: 7.2, keyCities: ['太原', '大同', '临汾'] },
+                            { name: '辽宁', baseValue: 3670, baseGrowth: 4.5, keyCities: ['沈阳', '大连', '鞍山'] },
+                            { name: '广西', baseValue: 3450, baseGrowth: 28.6, keyCities: ['南宁', '柳州', '桂林'] },
+                            { name: '云南', baseValue: 3120, baseGrowth: 32.1, keyCities: ['昆明', '曲靖', '玉溪'] },
+                            { name: '重庆', baseValue: 4560, baseGrowth: 11.2, keyCities: ['重庆'] },
+                            { name: '黑龙江', baseValue: 2780, baseGrowth: 3.1, keyCities: ['哈尔滨', '大庆', '齐齐哈尔'] },
+                            { name: '吉林', baseValue: 2540, baseGrowth: -2.4, keyCities: ['长春', '吉林', '四平'] },
+                            { name: '贵州', baseValue: 2890, baseGrowth: 26.8, keyCities: ['贵阳', '遵义', '毕节'] },
+                            { name: '上海', baseValue: 5120, baseGrowth: 6.8, keyCities: ['上海'] },
+                            { name: '北京', baseValue: 4780, baseGrowth: 4.2, keyCities: ['北京'] },
+                            { name: '天津', baseValue: 3210, baseGrowth: 8.9, keyCities: ['天津'] },
+                            { name: '内蒙古', baseValue: 2670, baseGrowth: 12.3, keyCities: ['呼和浩特', '包头', '赤峰'] },
+                            { name: '新疆', baseValue: 1980, baseGrowth: 18.9, keyCities: ['乌鲁木齐', '克拉玛依', '伊犁'] },
+                            { name: '甘肃', baseValue: 1760, baseGrowth: 14.2, keyCities: ['兰州', '天水', '酒泉'] },
+                            { name: '宁夏', baseValue: 1230, baseGrowth: 22.7, keyCities: ['银川', '石嘴山', '吴忠'] },
+                            { name: '海南', baseValue: 1450, baseGrowth: 35.4, keyCities: ['海口', '三亚', '儋州'] },
+                            { name: '青海', baseValue: 890, baseGrowth: 19.5, keyCities: ['西宁', '海东', '格尔木'] },
+                            { name: '西藏', baseValue: 560, baseGrowth: 42.8, keyCities: ['拉萨', '日喀则', '林芝'] }
+                        ];
+                        
+                        const model = modelData[modelId];
+                        const multiplier = model.totalSales / 85640;
+                        
+                        return baseData.map(item => ({
+                            name: item.name,
+                            value: Math.round(item.baseValue * multiplier),
+                            growthRate: item.baseGrowth * (1 + (Math.random() * 0.2 - 0.1)),
+                            keyCities: item.keyCities
+                        }));
+                    }
+                    
+                    // 模拟城市散点数据
+                    function generateScatterData(modelId) {
+                        const baseData = [
+                            { city: '广州', province: '广东', lng: 113.23, lat: 23.16, baseSales: 4560, baseGrowth: 18.2, rank: 1 },
+                            { city: '深圳', province: '广东', lng: 114.07, lat: 22.62, baseSales: 3890, baseGrowth: 12.5, rank: 2 },
+                            { city: '杭州', province: '浙江', lng: 120.15, lat: 30.28, baseSales: 3450, baseGrowth: 24.6, rank: 3 },
+                            { city: '成都', province: '四川', lng: 104.06, lat: 30.67, baseSales: 3120, baseGrowth: 28.3, rank: 4 },
+                            { city: '南京', province: '江苏', lng: 118.78, lat: 32.04, baseSales: 2780, baseGrowth: 9.2, rank: 5 },
+                            { city: '武汉', province: '湖北', lng: 114.30, lat: 30.60, baseSales: 2650, baseGrowth: 15.7, rank: 6 },
+                            { city: '郑州', province: '河南', lng: 113.62, lat: 34.75, baseSales: 2430, baseGrowth: 19.8, rank: 7 },
+                            { city: '西安', province: '陕西', lng: 108.93, lat: 34.27, baseSales: 2180, baseGrowth: 10.4, rank: 8 },
+                            { city: '长沙', province: '湖南', lng: 112.94, lat: 23.23, baseSales: 1980, baseGrowth: 21.3, rank: 9 },
+                            { city: '合肥', province: '安徽', lng: 117.28, lat: 31.86, baseSales: 1760, baseGrowth: 23.7, rank: 10 }
+                        ];
+                        
+                        const model = modelData[modelId];
+                        const multiplier = model.totalSales / 85640;
+                        
+                        return baseData.map(item => {
+                            const sales = Math.round(item.baseSales * multiplier);
+                            const growthRate = item.baseGrowth * (1 + (Math.random() * 0.2 - 0.1));
+                            
+                            return {
+                                name: item.city,
+                                value: [item.lng, item.lat, sales],
+                                cityInfo: {
+                                    city: item.city,
+                                    province: item.province,
+                                    sales: sales,
+                                    growthRate: parseFloat(growthRate.toFixed(1)),
+                                    marketShare: parseFloat((sales / model.totalSales * 100).toFixed(1)),
+                                    rank: item.rank
+                                }
+                            };
+                        });
+                    }
+                    
+                    let currentModel = 'star-rail';
+                    
+                    function initChart() {
+                        const model = modelData[currentModel];
+                        const provinceSales = generateProvinceSales(currentModel);
+                        const scatterData = generateScatterData(currentModel);
+                        
+                        const maxSales = Math.max(...provinceSales.map(item => item.value));
+                        
+                        const option = {
+                            title: {
+                                text: \`\${model.name}各省销量分布\`,
+                                subtext: '2025年上半年 • 单位：辆 • 点击地图查看详情',
+                                left: 'center',
+                                top: 8,
+                                textStyle: { color: '#333', fontSize: 14, fontWeight: 'bold' },
+                                subtextStyle: { color: '#666', fontSize: 11 }
+                            },
+                            tooltip: {
+                                trigger: 'item',
+                                formatter: function(params) {
+                                    if (params.componentType === 'series' && params.seriesType === 'scatter') {
+                                        const info = params.data.cityInfo;
+                                        return \`
+                                            <div style="font-weight:bold;margin-bottom:5px;font-size:12px;color:\${model.color}">\${info.city}</div>
+                                            <div style="margin-bottom:2px"><span style="color:#666">省份：</span>\${info.province}</div>
+                                            <div style="margin-bottom:2px"><span style="color:#666">销量：</span><span style="font-weight:bold;color:\${model.color}">\${info.sales.toLocaleString()}辆</span></div>
+                                            <div style="margin-bottom:2px"><span style="color:#666">同比：</span><span style="color:\${info.growthRate >= 0 ? '#28a745' : '#dc3545'};font-weight:bold">\${info.growthRate >= 0 ? '+' : ''}\${info.growthRate}%</span></div>
+                                            <div><span style="color:#666">排名：</span>第\${info.rank}位</div>
+                                        \`;
+                                    } else if (params.componentType === 'series' && params.seriesType === 'map') {
+                                        const provData = params.data;
+                                        if (provData && provData.value > 0) {
+                                            const growthColor = provData.growthRate >= 0 ? '#28a745' : '#dc3545';
+                                            const growthSign = provData.growthRate >= 0 ? '+' : '';
+                                            return \`
+                                                <div style="font-weight:bold;margin-bottom:5px;font-size:12px;color:\${model.color}">\${params.name}</div>
+                                                <div style="margin-bottom:2px"><span style="color:#666">销量：</span><span style="font-weight:bold;color:\${model.color}">\${provData.value.toLocaleString()}辆</span></div>
+                                                <div style="margin-bottom:2px"><span style="color:#666">同比：</span><span style="color:\${growthColor};font-weight:bold">\${growthSign}\${provData.growthRate.toFixed(1)}%</span></div>
+                                                <div><span style="color:#666">城市：</span>\${provData.keyCities.join('、')}</div>
+                                            \`;
+                                        }
+                                        return \`<div style="font-weight:bold;">\${params.name}</div><div style="color:#999">暂无销售数据</div>\`;
+                                    }
+                                    return params.name;
+                                },
+                                backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                borderColor: '#d9d9d9',
+                                borderWidth: 1,
+                                borderRadius: 5,
+                                padding: [8, 12],
+                                textStyle: { color: '#333', fontSize: 11 },
+                                extraCssText: 'box-shadow: 0 2px 8px rgba(0,0,0,0.06);'
+                            },
+                            visualMap: {
+                                type: 'continuous',
+                                left: 20,
+                                bottom: 30,
+                                min: 0,
+                                max: maxSales,
+                                text: ['高销量', '低销量'],
+                                calculable: true,
+                                inRange: { color: ['#e6f2ff', '#b3d9ff', '#80c1ff', '#4da8ff', '#1a8fff', '#0077e6', '#0059b3', '#003d80'] },
+                                textStyle: { color: '#333', fontSize: 9 },
+                                orient: 'horizontal',
+                                formatter: value => value.toFixed(0) + '辆'
+                            },
+                            toolbox: {
+                                show: true,
+                                orient: 'vertical',
+                                left: 15,
+                                top: 60,
+                                feature: {
+                                    dataView: { readOnly: false, title: '数据视图', lang: ['数据视图', '关闭', '刷新'], buttonColor: '#1890ff' },
+                                    restore: { title: '还原视图' },
+                                    saveAsImage: { title: '保存图片', pixelRatio: 2, name: \`吉利\${model.name}销量分布图\`, backgroundColor: '#fff' }
+                                },
+                                itemSize: 14,
+                                itemGap: 8
+                            },
+                            series: [
+                                {
+                                    name: '省份销量',
+                                    type: 'map',
+                                    map: 'china',
+                                    roam: true,
+                                    zoom: 1.2,
+                                    center: [105, 36],
+                                    label: {
+                                        show: true,
+                                        fontSize: 8,
+                                        color: '#333',
+                                        formatter: params => params.value > (maxSales * 0.15) ? params.name : ''
+                                    },
+                                    emphasis: {
+                                        label: { show: true, color: '#fff', fontWeight: 'bold', fontSize: 10 },
+                                        itemStyle: { areaColor: model.color, borderColor: '#fff', borderWidth: 1.5 }
+                                    },
+                                    itemStyle: { areaColor: '#f5f5f5', borderColor: '#ddd', borderWidth: 0.8 },
+                                    data: provinceSales
+                                },
+                                {
+                                    name: '重点城市销量',
+                                    type: 'scatter',
+                                    coordinateSystem: 'geo',
+                                    data: scatterData,
+                                    symbolSize: val => Math.max(7, Math.sqrt(val[2]) * 1.0),
+                                    itemStyle: {
+                                        color: params => {
+                                            const g = params.data.cityInfo.growthRate;
+                                            return g >= 20 ? '#28a745' : g >= 10 ? '#20c997' : g >= 0 ? '#17a2b8' : '#dc3545';
+                                        },
+                                        borderColor: '#fff',
+                                        borderWidth: 1.2,
+                                        shadowBlur: 4,
+                                        shadowColor: 'rgba(0, 0, 0, 0.12)'
+                                    },
+                                    emphasis: {
+                                        itemStyle: { borderColor: '#fff', borderWidth: 2, shadowBlur: 6, shadowColor: 'rgba(0, 0, 0, 0.2)' }
+                                    },
+                                    label: {
+                                        show: true,
+                                        position: 'right',
+                                        formatter: params => \`{a|\${params.data.cityInfo.city}}\\n{b|\${params.data.cityInfo.growthRate >= 0 ? '+' : ''}\${params.data.cityInfo.growthRate}%}\`,
+                                        rich: { a: { fontSize: 9, fontWeight: 'bold', color: '#333' }, b: { fontSize: 8, color: '#666' } },
+                                        distance: 3
+                                    }
+                                }
+                            ]
+                        };
+                        
+                        myChart.setOption(option);
+                    }
+                    
+                    initChart();
+                    
+                    window.addEventListener('resize', () => myChart.resize());
+                    
+                    const modelSelect = document.getElementById('model-select');
+                    const modelName = document.querySelector('.model-name');
+                    const modelDesc = document.querySelector('.model-desc');
+                    const modelPrice = document.querySelector('.model-price');
+                    const modelIcon = document.querySelector('.model-icon');
+                    const statValueElements = document.querySelectorAll('.stat-value');
+                    const statChangeElements = document.querySelectorAll('.stat-change');
+                    
+                    modelSelect.addEventListener('change', function() {
+                        const modelId = this.value;
+                        currentModel = modelId;
+                        
+                        const model = modelData[modelId];
+                        modelName.textContent = model.name;
+                        modelDesc.textContent = model.desc;
+                        modelPrice.textContent = model.price;
+                        modelIcon.textContent = model.icon;
+                        document.querySelector('.model-info').style.borderLeftColor = model.color;
+                        
+                        statValueElements[0].textContent = model.totalSales.toLocaleString();
+                        statValueElements[1].textContent = model.marketShare + '%';
+                        statValueElements[2].textContent = model.keyCities;
+                        statValueElements[3].textContent = '31';
+                        
+                        const growthElement = statChangeElements[0];
+                        growthElement.textContent = \`\${model.growthRate >= 0 ? '+' : ''}\${model.growthRate}%\`;
+                        growthElement.className = \`stat-change \${model.growthRate >= 0 ? 'change-positive' : 'change-negative'}\`;
+                        
+                        const marketShareChangeElement = statChangeElements[1];
+                        marketShareChangeElement.textContent = \`\${model.marketShareChange >= 0 ? '+' : ''}\${model.marketShareChange}%\`;
+                        marketShareChangeElement.className = \`stat-change \${model.marketShareChange >= 0 ? 'change-positive' : 'change-negative'}\`;
+                        
+                        initChart();
+                        
+                        document.querySelector('.model-info').style.animation = 'none';
+                        setTimeout(() => {
+                            document.querySelector('.model-info').style.animation = 'fadeIn 0.3s';
+                        }, 10);
+                    });
+                    
+                    myChart.on('click', function(params) {
+                        if (params.componentType === 'series' && params.seriesType === 'map') {
+                            const provinceName = params.name;
+                            const model = modelData[currentModel];
+                            const provinceSales = generateProvinceSales(currentModel);
+                            const provinceData = provinceSales.find(item => item.name === provinceName);
+                            
+                            if (provinceData) {
+                                alert(\`\${model.name}在\${provinceName}的销售数据：\\n\\n销量: \${provinceData.value.toLocaleString()}辆\\n同比增长率: \${provinceData.growthRate >= 0 ? '+' : ''}\${provinceData.growthRate.toFixed(1)}%\\n重点销售城市: \${provinceData.keyCities.join('、')}\\n\\n数据时间: 2025年上半年\`);
+                            }
+                        }
+                    });
+                    
+                    const style = document.createElement('style');
+                    style.textContent = \`@keyframes fadeIn { from { opacity: 0.5; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }\`;
+                    document.head.appendChild(style);
+                <\/script>
+            </body>
+            </html>
+        `;
+        
+        function showModelSalesModal(initialModel) {
+            const modal = document.getElementById('modelSalesModal');
+            const iframe = document.getElementById('modelSalesIframe');
+            iframe.srcdoc = modelSalesHtml;
+            modal.style.display = 'flex';
+            iframe.onload = function() {
+                if (initialModel) {
+                    try {
+                        const iframeWindow = iframe.contentWindow;
+                        const modelSelect = iframeWindow.document.getElementById('model-select');
+                        for (let i = 0; i < modelSelect.options.length; i++) {
+                            if (modelSelect.options[i].text.includes(initialModel)) {
+                                modelSelect.selectedIndex = i;
+                                modelSelect.dispatchEvent(new Event('change'));
+                                break;
+                            }
+                        }
+                    } catch (e) {}
+                }
+            };
+        }
+        
+        function closeModelSalesModal() {
+            document.getElementById('modelSalesModal').style.display = 'none';
+        }
+        
+        // ==================== 模块二：收入多维度分析 ====================
+        function initMarketingResourcesChart() {
+            const chartDom = document.getElementById('marketingResourcesChart');
+            const colors = {
+                geliBlue: '#1B3A8D',
+                geliLightBlue: '#2E4EA1',
+                geliAccentBlue: '#4A6FC1',
+                geliSoftLight: '#6F9AD1',
+                geliExtraLight: '#A0C4F0',
+                industryBenchmark: '#FF6B6B',
+                auxiliaryGold: '#F9B84A',
+                auxiliaryGreen: '#5FA777',
+            };
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            
+            const actualRev = [118, 132, 148, 175, 198, 222];
+            const budgetRev = [120, 135, 152, 170, 193, 225];
+            const growth = [5.2, 11.9, 12.1, 18.2, 13.1, 12.1];
+            
+            const wholeVehicle = [62, 68, 73, 92, 103, 110];
+            const newEnergy = [32, 38, 47, 53, 63, 72];
+            const overseas = [24, 26, 28, 30, 32, 40];
+            
+            const brandData = [
+                { name: '极氪 (Zeekr)', value: 28, itemStyle: { color: colors.geliBlue } },
+                { name: '领克 (Lynk & Co)', value: 24, itemStyle: { color: colors.geliLightBlue } },
+                { name: '吉利 (Geely)', value: 22, itemStyle: { color: colors.geliAccentBlue } },
+                { name: '沃尔沃 (Volvo)', value: 16, itemStyle: { color: colors.geliSoftLight } },
+                { name: '极星 (Polestar)', value: 10, itemStyle: { color: colors.auxiliaryGold } }
+            ];
+            
+            const regionData = [
+                { name: '中东', value: 16, itemStyle: { color: '#FF6B6B' } },
+                { name: '中美', value: 14, itemStyle: { color: '#4A6FC1' } },
+                { name: '亚太', value: 24, itemStyle: { color: '#10b981' } },
+                { name: '南美', value: 13, itemStyle: { color: '#f59e0b' } },
+                { name: '欧洲', value: 12, itemStyle: { color: '#9b59b6' } },
+                { name: '白俄罗斯', value: 5, itemStyle: { color: '#e67e22' } },
+                { name: '非洲', value: 9, itemStyle: { color: '#2ecc71' } },
+                { name: '东欧', value: 7, itemStyle: { color: '#e74c3c' } }
+            ];
+            
+            function clearContainer() {
+                if (marketingChart) {
+                    marketingChart.dispose();
+                    marketingChart = null;
+                }
+                chartDom.innerHTML = '';
+            }
+            
+            function drawGrowthChart() {
+                clearContainer();
+                const chartDiv = document.createElement('div');
+                chartDiv.style.width = '100%';
+                chartDiv.style.height = '100%';
+                chartDom.appendChild(chartDiv);
+                marketingChart = echarts.init(chartDiv);
+                
+                const option = {
+                    tooltip: { 
+                        trigger: 'axis', 
+                        axisPointer: { type: 'shadow' },
+                        valueFormatter: (v, s) => (s === '收入增长率 %' ? v + '%' : v + ' 万元')
+                    },
+                    legend: { 
+                        data: ['预算收入', '实际收入', '收入增长率 %'], 
+                        left: 'center', 
+                        top: 0, 
+                        backgroundColor: 'rgba(255,255,255,0.8)', 
+                        borderRadius: 30 
+                    },
+                    grid: { left: '8%', right: '9%', top: '22%', bottom: '10%' },
+                    xAxis: { 
+                        type: 'category', 
+                        data: months, 
+                        axisLine: { lineStyle: { color: '#B0C4DE' } }, 
+                        axisLabel: { color: colors.geliBlue } 
+                    },
+                    yAxis: [
+                        { 
+                            type: 'value', 
+                            name: '金额 (万元)', 
+                            nameTextStyle: { color: colors.geliLightBlue }, 
+                            splitLine: { lineStyle: { type: 'dashed', color: '#E0E8F5' } } 
+                        },
+                        { 
+                            type: 'value', 
+                            name: '增长率 %', 
+                            nameTextStyle: { color: colors.industryBenchmark }, 
+                            splitLine: { show: false }, 
+                            axisLabel: { color: colors.industryBenchmark, formatter: '{value}%' }, 
+                            min: 0, 
+                            max: 25 
+                        }
+                    ],
+                    series: [
+                        { 
+                            name: '预算收入', 
+                            type: 'bar', 
+                            data: budgetRev, 
+                            itemStyle: { color: colors.geliLightBlue, borderRadius: [6,6,0,0] }, 
+                            barWidth: 18 
+                        },
+                        { 
+                            name: '实际收入', 
+                            type: 'bar', 
+                            data: actualRev, 
+                            itemStyle: { color: colors.geliBlue, borderRadius: [6,6,0,0] }, 
+                            barWidth: 18 
+                        },
+                        { 
+                            name: '收入增长率 %', 
+                            type: 'line', 
+                            yAxisIndex: 1, 
+                            smooth: true, 
+                            symbol: 'circle', 
+                            lineStyle: { width: 3, color: colors.industryBenchmark }, 
+                            itemStyle: { color: colors.industryBenchmark }, 
+                            data: growth,
+                            label: { 
+                                show: true, 
+                                position: 'top', 
+                                formatter: '{c}%', 
+                                backgroundColor: '#fff2ec', 
+                                padding: [2,8,2,8], 
+                                borderRadius: 20, 
+                                color: colors.industryBenchmark 
+                            } 
+                        }
+                    ]
+                };
+                marketingChart.setOption(option);
+            }
+            
+            function drawStructureChart() {
+                clearContainer();
+                const chartDiv = document.createElement('div');
+                chartDiv.style.width = '100%';
+                chartDiv.style.height = '100%';
+                chartDom.appendChild(chartDiv);
+                marketingChart = echarts.init(chartDiv);
+                
+                const option = {
+                    tooltip: { 
+                        trigger: 'axis', 
+                        axisPointer: { type: 'shadow' }, 
+                        valueFormatter: v => v + ' 万元' 
+                    },
+                    legend: { 
+                        data: ['整车销售收入', '新能源车型收入', '海外市场收入'], 
+                        left: 'center', 
+                        top: 0, 
+                        borderRadius: 30 
+                    },
+                    grid: { left: '8%', right: '5%', top: '22%', bottom: '10%' },
+                    xAxis: { 
+                        type: 'category', 
+                        data: months, 
+                        axisLine: { lineStyle: { color: '#B0C4DE' } }, 
+                        axisLabel: { color: colors.geliBlue } 
+                    },
+                    yAxis: { 
+                        type: 'value', 
+                        name: '收入 (万元)', 
+                        nameTextStyle: { color: colors.geliLightBlue }, 
+                        splitLine: { lineStyle: { type: 'dashed', color: '#E0E8F5' } } 
+                    },
+                    series: [
+                        { 
+                            name: '整车销售收入', 
+                            type: 'bar', 
+                            stack: 'total', 
+                            data: wholeVehicle, 
+                            itemStyle: { color: colors.geliBlue }, 
+                            barWidth: 30 
+                        },
+                        { 
+                            name: '新能源车型收入', 
+                            type: 'bar', 
+                            stack: 'total', 
+                            data: newEnergy, 
+                            itemStyle: { color: colors.geliAccentBlue } 
+                        },
+                        { 
+                            name: '海外市场收入', 
+                            type: 'bar', 
+                            stack: 'total', 
+                            data: overseas, 
+                            itemStyle: { color: colors.geliLightBlue } 
+                        }
+                    ]
+                };
+                marketingChart.setOption(option);
+            }
+            
+            function drawBrandPieChart() {
+                clearContainer();
+                const chartDiv = document.createElement('div');
+                chartDiv.style.width = '100%';
+                chartDiv.style.height = '100%';
+                chartDom.appendChild(chartDiv);
+                marketingChart = echarts.init(chartDiv);
+                
+                marketingChart.setOption({
+                    tooltip: { trigger: 'item', formatter: '{b}: {c}%' },
+                    legend: {
+                        orient: 'vertical',
+                        left: 'left',
+                        top: 'center',
+                        itemGap: 12,
+                        textStyle: { color: colors.geliBlue, fontWeight: 450 },
+                        backgroundColor: 'rgba(255,255,255,0.6)',
+                        borderRadius: 16,
+                        padding: [8, 12, 8, 12],
+                    },
+                    series: [
+                        {
+                            name: '品牌收入占比',
+                            type: 'pie',
+                            radius: ['50%', '75%'],
+                            avoidLabelOverlap: true,
+                            itemStyle: {
+                                borderRadius: 10,
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            },
+                            label: { show: false },
+                            emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold' } },
+                            data: brandData
+                        }
+                    ]
+                });
+            }
+            
+            function drawRegionPieChart() {
+                clearContainer();
+                const chartDiv = document.createElement('div');
+                chartDiv.style.width = '100%';
+                chartDiv.style.height = '100%';
+                chartDom.appendChild(chartDiv);
+                marketingChart = echarts.init(chartDiv);
+                
+                marketingChart.setOption({
+                    tooltip: { trigger: 'item', formatter: '{b}: {c}%' },
+                    legend: {
+                        orient: 'vertical',
+                        left: 'left',
+                        top: 'center',
+                        itemGap: 12,
+                        textStyle: { color: colors.geliBlue, fontWeight: 450 },
+                        backgroundColor: 'rgba(255,255,255,0.6)',
+                        borderRadius: 16,
+                        padding: [8, 12, 8, 12],
+                    },
+                    series: [
+                        {
+                            name: '区域收入占比',
+                            type: 'pie',
+                            radius: ['50%', '75%'],
+                            avoidLabelOverlap: true,
+                            itemStyle: {
+                                borderRadius: 10,
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            },
+                            label: { show: false },
+                            emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold' } },
+                            data: regionData
+                        }
+                    ]
+                });
+            }
+            
+            const select = document.getElementById('marketingSelect');
+            const subtitle = document.getElementById('marketingSubtitle');
+            
+            function switchChart(value) {
+                if (value === 'growth') {
+                    subtitle.textContent = '营业收入预算/实际及增长率分析';
+                    drawGrowthChart();
+                } else if (value === 'structure') {
+                    subtitle.textContent = '整车、新能源、海外收入构成';
+                    drawStructureChart();
+                } else if (value === 'brandPie') {
+                    subtitle.textContent = '品牌收入占比';
+                    drawBrandPieChart();
+                } else if (value === 'regionPie') {
+                    subtitle.textContent = '区域收入占比 (中东、中美、亚太等)';
+                    drawRegionPieChart();
+                }
+            }
+            
+            select.addEventListener('change', function(e) {
+                switchChart(e.target.value);
+            });
+            
+            switchChart('growth');
+            
+            window.addEventListener('resize', () => marketingChart && marketingChart.resize());
+        }
+        
+        // ==================== 模块三：销量多维度分析 ====================
+        function initRevenueAnalysisChart() {
+            function initOverallSalesChart() {
+                const chartDom = document.getElementById('overallChart');
+                overallChart = echarts.init(chartDom);
+                const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+                const vehicleBudget = [125000,122000,140000,138000,148000,152000,142000,145000,158000,162000,168000,172000];
+                const vehicleActual = [130000,125000,147000,135000,153000,156000,146000,143000,162000,167000,172000,178000];
+                const vehicleLastYear = [115000,112000,132000,128000,138000,142000,132000,137000,147000,152000,157000,162000];
+                const oemBudget = [38000,37000,39000,40000,41000,42000,40000,41000,42000,43000,44000,45000];
+                const oemActual = [35000,36000,40000,39500,41500,43000,40500,42000,42500,43500,44500,45500];
+                const oemLastYear = [32000,33000,37000,38000,39000,40000,38000,39000,40000,41000,42000,43000];
+                const option = {
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['整车预算','整车实际','整车同期','代工预算','代工实际','代工同期'] },
+                    grid: { left: '3%', right: '4%', bottom: '10%', top: '20%', containLabel: true },
+                    xAxis: { type: 'category', data: months },
+                    yAxis: { type: 'value', name: '销量 (辆)' },
+                    series: [
+                        { name: '整车预算', type: 'line', data: vehicleBudget, lineStyle: { type: 'dashed' } },
+                        { name: '整车实际', type: 'line', data: vehicleActual, lineStyle: { width: 3 } },
+                        { name: '整车同期', type: 'line', data: vehicleLastYear, lineStyle: { type: 'dotted' } },
+                        { name: '代工预算', type: 'line', data: oemBudget, lineStyle: { type: 'dashed' } },
+                        { name: '代工实际', type: 'line', data: oemActual, lineStyle: { width: 3 } },
+                        { name: '代工同期', type: 'line', data: oemLastYear, lineStyle: { type: 'dotted' } }
+                    ]
+                };
+                overallChart.setOption(option);
+                document.getElementById('vehicleBtn').addEventListener('click', function() {
+                    document.getElementById('vehicleBtn').classList.add('active');
+                    document.getElementById('oemBtn').classList.remove('active');
+                });
+                document.getElementById('oemBtn').addEventListener('click', function() {
+                    document.getElementById('oemBtn').classList.add('active');
+                    document.getElementById('vehicleBtn').classList.remove('active');
+                });
+            }
+            
+            function initRegionSalesChart() {
+                const chartDom = document.getElementById('regionChart');
+                regionChart = echarts.init(chartDom);
+                const channelData = [{ value: 65, name: '总代' }, { value: 35, name: '子公司' }];
+                const countryData = [
+                    { value: 15, name: '印度尼西亚' }, { value: 12, name: '南非' }, { value: 10, name: '俄罗斯' },
+                    { value: 8, name: '马来西亚' }, { value: 7, name: '沙特阿拉伯' }, { value: 6, name: '菲律宾' },
+                    { value: 5, name: '埃及' }, { value: 4, name: '智利' }, { value: 3, name: '乌克兰' }, { value: 30, name: '其他' }
+                ];
+                const regionData = [
+                    { value: 25, name: '中东' }, { value: 20, name: '中美' }, { value: 18, name: '亚太' },
+                    { value: 12, name: '南美' }, { value: 10, name: '欧洲' }, { value: 8, name: '白俄罗斯' },
+                    { value: 5, name: '非洲' }, { value: 2, name: '东欧' }
+                ];
+                const channelColors = ['#1e3a8a', '#3b82f6'];
+                const countryColors = ['#ef4444','#f97316','#f59e0b','#84cc16','#10b981','#06b6d4','#0ea5e9','#8b5cf6','#ec4899','#64748b'];
+                const regionColors = ['#dc2626','#ea580c','#ca8a04','#16a34a','#0891b2','#7c3aed','#db2777','#475569'];
+                const option = {
+                    tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c}%' },
+                    legend: { type: 'scroll', orient: 'vertical', right: '5%', top: 'center', width: '20%', height: '80%', textStyle: { fontSize: 10 } },
+                    series: [
+                        {
+                            name: '销售渠道构成', type: 'pie', radius: [0, '18%'], center: ['35%', '50%'],
+                            label: { position: 'inside', fontSize: 10, fontWeight: 'bold', color: '#fff', formatter: '{b}\n{d}%' },
+                            labelLine: { show: false }, itemStyle: { borderColor: '#fff', borderWidth: 2 },
+                            data: channelData.map((item, index) => ({ ...item, itemStyle: { color: channelColors[index] } }))
+                        },
+                        {
+                            name: '国家销量构成', type: 'pie', radius: ['25%', '40%'], center: ['35%', '50%'],
+                            label: { fontSize: 9, fontWeight: 'bold', formatter: function(params) { return params.percent < 5 ? `{outside|${params.name}}\n{percent|${params.percent}%}` : `{b|${params.name}}\n{percent|${params.percent}%}`; },
+                                rich: { b: { fontSize: 9, lineHeight: 14, color: '#1e293b' }, outside: { fontSize: 8, lineHeight: 12, color: '#475569' }, percent: { fontSize: 9, lineHeight: 14, color: '#0f172a' } } },
+                            labelLine: { length: 12, length2: 8, smooth: true, lineStyle: { width: 1.5, color: '#94a3b8' } },
+                            itemStyle: { borderColor: '#fff', borderWidth: 2 },
+                            data: countryData.map((item, index) => ({ ...item, itemStyle: { color: countryColors[index] } }))
+                        },
+                        {
+                            name: '区域销量构成', type: 'pie', radius: ['48%', '63%'], center: ['35%', '50%'],
+                            label: { fontSize: 9, fontWeight: 'bold', formatter: function(params) { return params.percent < 5 ? `{outside|${params.name}}\n{percent|${params.percent}%}` : `{b|${params.name}}\n{percent|${params.percent}%}`; },
+                                rich: { b: { fontSize: 9, lineHeight: 14, color: '#1e293b' }, outside: { fontSize: 8, lineHeight: 12, color: '#475569' }, percent: { fontSize: 9, lineHeight: 14, color: '#0f172a' } } },
+                            labelLine: { length: 15, length2: 12, smooth: true, lineStyle: { width: 1.5, color: '#94a3b8' } },
+                            itemStyle: { borderColor: '#fff', borderWidth: 2 },
+                            data: regionData.map((item, index) => ({ ...item, itemStyle: { color: regionColors[index] } }))
+                        }
+                    ]
+                };
+                option.legend.data = [...channelData.map(item => ({ name: item.name, icon: 'circle' })), ...countryData.map(item => ({ name: item.name, icon: 'circle' })), ...regionData.map(item => ({ name: item.name, icon: 'circle' }))];
+                regionChart.setOption(option);
+            }
+            
+            function initBrandSalesChart() {
+                const chartDom = document.getElementById('brandChart');
+                brandChart = echarts.init(chartDom);
+                const months = ['1月','2月','3月','4月','5月','6月'];
+                const brands = ['吉利汽车', '极氪', '领克', '翼真'];
+                const brandSalesData = {
+                    '吉利汽车': [92.5, 95.3, 98.7, 102.4, 105.8, 108.6],
+                    '极氪': [15.2, 16.8, 18.5, 20.3, 22.6, 25.4],
+                    '领克': [32.4, 34.7, 36.9, 39.2, 41.8, 44.3],
+                    '翼真': [6.8, 7.9, 9.2, 10.7, 12.5, 14.3]
+                };
+                const option = {
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { data: brands, top: 10, textStyle: { fontSize: 10 } },
+                    grid: { left: '12%', right: '8%', bottom: '15%', top: '20%', containLabel: true },
+                    xAxis: { type: 'category', data: months },
+                    yAxis: { type: 'value', name: '销量 (万辆)' },
+                    series: brands.map(brand => ({
+                        name: brand, type: 'bar', stack: 'total', data: brandSalesData[brand], barWidth: '40%',
+                        itemStyle: { color: brand === '吉利汽车' ? '#1B3A8D' : brand === '极氪' ? '#f59e0b' : brand === '领克' ? '#FF6B6B' : '#10b981', borderRadius: [2,2,0,0] },
+                        label: { show: true, position: 'inside', formatter: '{c}', fontSize: 8, color: 'white' }
+                    }))
+                };
+                brandChart.setOption(option);
+            }
+            
+            function initModelSalesChart() {
+                const chartDom = document.getElementById('modelChart');
+                modelChart = echarts.init(chartDom);
+                const models = ['星瑞', '星越L', '博越L', '帝豪L', '几何A', '极氪001', '领克03', '银河L7'];
+                const salesData = [92.4, 98.6, 84.2, 118.7, 72.3, 58.6, 74.8, 52.4];
+                const growthData = [18.6, 25.3, 21.7, 12.4, 38.2, 46.8, 22.4, 31.5];
+                const option = {
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { data: ['销量', '同比增长'], top: 10, textStyle: { fontSize: 10 } },
+                    grid: { left: '12%', right: '8%', bottom: '15%', top: '20%', containLabel: true },
+                    xAxis: { type: 'category', data: models, axisLabel: { rotate: 30 } },
+                    yAxis: [{ type: 'value', name: '销量 (万辆)' }, { type: 'value', name: '同比增长 (%)' }],
+                    series: [
+                        { name: '销量', type: 'bar', data: salesData.map((v,i) => ({ value: v, itemStyle: { color: i%2===0 ? '#1B3A8D' : '#4A6FC1' } })), barWidth: '40%', label: { show: true, position: 'top' } },
+                        { name: '同比增长', type: 'line', yAxisIndex: 1, data: growthData, lineStyle: { color: '#f59e0b' }, symbol: 'circle', symbolSize: 6, label: { show: true, position: 'top', formatter: '{c}%' } }
+                    ]
+                };
+                modelChart.setOption(option);
+                modelChart.on('click', showBudgetModal);
+            }
+            
+            initOverallSalesChart();
+            initRegionSalesChart();
+            initBrandSalesChart();
+            initModelSalesChart();
+            
+            function switchChart(chartType) {
+                document.querySelectorAll('.sales-chart-item').forEach(item => item.classList.remove('active'));
+                const selected = document.getElementById(`${chartType}-sales`);
+                if (selected) selected.classList.add('active');
+                const subtitles = { overall: '整车与代工销量趋势对比分析', region: '销售渠道、国家与区域销量构成分析', brand: '四大品牌销量堆积条形图分析', model: '各车系销量与同比增长分析' };
+                document.getElementById('revenueSubtitle').textContent = subtitles[chartType] || '选择不同维度查看销量分析';
+                setTimeout(() => {
+                    if (chartType === 'overall' && overallChart) overallChart.resize();
+                    else if (chartType === 'region' && regionChart) regionChart.resize();
+                    else if (chartType === 'brand' && brandChart) brandChart.resize();
+                    else if (chartType === 'model' && modelChart) modelChart.resize();
+                }, 100);
+            }
+            
+            document.getElementById('revenueSelect').addEventListener('change', function() { switchChart(this.value); });
+            switchChart('overall');
+            return { overallChart, regionChart, brandChart, modelChart };
+        }
+        
+        // ==================== 模块四：价格体系与折扣分析（优化 tooltip，紧凑悬浮窗） ====================
+        function initPriceSystemChart() {
+            const chartDom = document.getElementById('priceMainChart');
+            if (priceMainChart) priceMainChart.dispose();
+            priceMainChart = echarts.init(chartDom);
+            
+            // ==================== 模拟数据 ====================
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            const models = [
+                '星瑞', '星越L', '博越L', '帝豪L', '几何A', 
+                '极氪001', '领克03', '银河L7', '熊猫MINI', '远景X6'
+            ];
+            
+            // 车型所属品牌及车系映射
+            const modelBrand = {
+                '星瑞': '吉利', '星越L': '吉利', '博越L': '吉利', '帝豪L': '吉利', '远景X6': '吉利',
+                '几何A': '几何', '极氪001': '极氪', '领克03': '领克', '银河L7': '吉利', '熊猫MINI': '吉利'
+            };
+            const modelSeries = {
+                '星瑞': '轿车', '星越L': 'SUV', '博越L': 'SUV', '帝豪L': '轿车', '远景X6': 'SUV',
+                '几何A': '轿车', '极氪001': '猎装车', '领克03': '轿车', '银河L7': 'SUV', '熊猫MINI': '微型车'
+            };
+            
+            // 生成各车型各月的平均成交价（万元）
+            const priceData = [];
+            for (let m = 0; m < models.length; m++) {
+                const model = models[m];
+                let basePrice = 10;
+                if (model.includes('星瑞')) basePrice = 13;
+                else if (model.includes('星越L')) basePrice = 16;
+                else if (model.includes('博越L')) basePrice = 14;
+                else if (model.includes('帝豪L')) basePrice = 9;
+                else if (model.includes('几何A')) basePrice = 15;
+                else if (model.includes('极氪001')) basePrice = 30;
+                else if (model.includes('领克03')) basePrice = 18;
+                else if (model.includes('银河L7')) basePrice = 17;
+                else if (model.includes('熊猫MINI')) basePrice = 5;
+                else if (model.includes('远景X6')) basePrice = 8;
+                
+                const row = [];
+                for (let mon = 0; mon < months.length; mon++) {
+                    let seasonal = 0;
+                    if (mon >= 4 && mon <= 7) seasonal = 0.5;
+                    if (mon >= 10) seasonal = 0.3;
+                    const random = (Math.random() * 2 - 1) * 0.8;
+                    let price = basePrice + seasonal + random;
+                    price = Math.round(price * 10) / 10;
+                    row.push(price);
+                }
+                priceData.push(row);
+            }
+            
+            // 辅助函数：获取品牌颜色
+            function getBrandColor(brand) {
+                const map = {
+                    '吉利': '#1B3A8D',
+                    '领克': '#FF6B6B',
+                    '几何': '#10b981',
+                    '极氪': '#f59e0b'
+                };
+                return map[brand] || '#1B3A8D';
+            }
+            
+            // ==================== 聚合数据计算（用于平均价格线图） ====================
+            function getAggregatedData(dim) {
+                if (dim === 'brand') {
+                    const brands = ['吉利', '领克', '几何', '极氪'];
+                    const brandMap = {};
+                    models.forEach((model, idx) => {
+                        const b = modelBrand[model];
+                        if (!brandMap[b]) brandMap[b] = [];
+                        brandMap[b].push(idx);
+                    });
+                    const series = [];
+                    brands.forEach(b => {
+                        if (brandMap[b] && brandMap[b].length > 0) {
+                            const avg = [];
+                            for (let mon = 0; mon < months.length; mon++) {
+                                let sum = 0;
+                                brandMap[b].forEach(idx => sum += priceData[idx][mon]);
+                                avg.push(Math.round(sum / brandMap[b].length * 10) / 10);
+                            }
+                            let color = getBrandColor(b);
+                            series.push({ name: b, data: avg, color: color });
+                        }
+                    });
+                    return { series };
+                } else if (dim === 'series') {
+                    const seriesMap = {};
+                    models.forEach((model, idx) => {
+                        const s = modelSeries[model];
+                        if (!seriesMap[s]) seriesMap[s] = [];
+                        seriesMap[s].push(idx);
+                    });
+                    const seriesList = ['轿车', 'SUV', '猎装车', '微型车'];
+                    const series = [];
+                    seriesList.forEach(s => {
+                        if (seriesMap[s] && seriesMap[s].length > 0) {
+                            const avg = [];
+                            for (let mon = 0; mon < months.length; mon++) {
+                                let sum = 0;
+                                seriesMap[s].forEach(idx => sum += priceData[idx][mon]);
+                                avg.push(Math.round(sum / seriesMap[s].length * 10) / 10);
+                            }
+                            let color = '#4A6FC1';
+                            if (s === 'SUV') color = '#2E4EA1';
+                            else if (s === '猎装车') color = '#f59e0b';
+                            else if (s === '微型车') color = '#10b981';
+                            series.push({ name: s, data: avg, color: color });
+                        }
+                    });
+                    return { series };
+                } else if (dim === 'model') {
+                    const topModels = models.slice(0, 6);
+                    const series = topModels.map((model, idx) => {
+                        const modelIdx = models.indexOf(model);
+                        const data = priceData[modelIdx];
+                        let color = `hsl(${idx * 60}, 70%, 50%)`;
+                        return { name: model, data: data, color: color };
+                    });
+                    return { series };
+                }
+                return { series: [] };
+            }
+            
+            // ==================== 绘制折线图（tooltip 优化，紧凑悬浮窗） ====================
+            function drawLineChart(dim) {
+                priceMainChart.clear();
+                const { series } = getAggregatedData(dim);
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        confine: true,
+                        padding: [4, 8],
+                        textStyle: { fontSize: 10 },
+                        extraCssText: 'max-width: 200px; white-space: pre-wrap;',
+                        formatter: function(params) {
+                            let res = params[0].axisValue + '<br/>';
+                            params.forEach(p => {
+                                res += `${p.marker} ${p.seriesName}: <b>${p.value} 万元</b><br/>`;
+                            });
+                            return res;
+                        }
+                    },
+                    legend: { data: series.map(s => s.name), left: 'center', top: 0, itemWidth: 10, itemHeight: 8, textStyle: { fontSize: 9 } },
+                    grid: { left: '8%', right: '5%', top: '20%', bottom: '10%', containLabel: true },
+                    xAxis: { type: 'category', data: months, axisLabel: { fontSize: 9 } },
+                    yAxis: { type: 'value', name: '平均价格 (万元)', nameTextStyle: { fontSize: 9 }, axisLabel: { fontSize: 8 } },
+                    series: series.map(s => ({
+                        name: s.name,
+                        type: 'line',
+                        data: s.data,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 4,
+                        lineStyle: { width: 2, color: s.color },
+                        itemStyle: { color: s.color }
+                    }))
+                };
+                priceMainChart.setOption(option);
+            }
+            
+            // ==================== 绘制热力图（tooltip 优化，仅显示当前单元格） ====================
+            function drawHeatmap() {
+                priceMainChart.clear();
+                // 构造热力图数据 [xIndex, yIndex, value]
+                const heatData = [];
+                for (let m = 0; m < models.length; m++) {
+                    for (let mon = 0; mon < months.length; mon++) {
+                        heatData.push([mon, m, priceData[m][mon]]);
+                    }
+                }
+                const allPrices = priceData.flat();
+                const minPrice = Math.min(...allPrices);
+                const maxPrice = Math.max(...allPrices);
+                
+                const option = {
+                    tooltip: {
+                        confine: true,
+                        padding: [4, 8],
+                        textStyle: { fontSize: 10 },
+                        extraCssText: 'max-width: 180px;',
+                        formatter: function(params) {
+                            const month = months[params.value[0]];
+                            const model = models[params.value[1]];
+                            const price = params.value[2];
+                            return `${model}<br/>${month}: <b>${price} 万元</b>`;
+                        }
+                    },
+                    grid: { left: '15%', right: '5%', top: '10%', bottom: '15%', containLabel: true },
+                    xAxis: { type: 'category', data: months, splitArea: { show: true }, axisLabel: { fontSize: 9 } },
+                    yAxis: { type: 'category', data: models, splitArea: { show: true }, axisLabel: { fontSize: 9 } },
+                    visualMap: {
+                        min: minPrice,
+                        max: maxPrice,
+                        calculable: true,
+                        orient: 'horizontal',
+                        left: 'center',
+                        bottom: 0,
+                        inRange: { color: ['#e6f2ff', '#b3d9ff', '#80c1ff', '#4da8ff', '#1a8fff', '#0077e6', '#0059b3', '#003d80'] },
+                        textStyle: { fontSize: 8 }
+                    },
+                    series: [{
+                        name: '车型月成交价',
+                        type: 'heatmap',
+                        data: heatData,
+                        label: { show: false },
+                        emphasis: { itemStyle: { borderColor: '#333', borderWidth: 1 } }
+                    }]
+                };
+                priceMainChart.setOption(option);
+            }
+            
+            // ==================== 绘制价格重叠分析图（tooltip 显示品牌详情） ====================
+            function drawOverlapChart() {
+                priceMainChart.clear();
+                const brands = ['吉利', '领克', '几何', '极氪'];
+                
+                const priceRanges = {
+                    '吉利': { 
+                        min: 8, 
+                        max: 18, 
+                        mainModels: ['星瑞', '星越L', '博越L'],
+                        color: getBrandColor('吉利')
+                    },
+                    '领克': { 
+                        min: 15, 
+                        max: 25, 
+                        mainModels: ['领克03', '领克06', '领克09'],
+                        color: getBrandColor('领克')
+                    },
+                    '几何': { 
+                        min: 10, 
+                        max: 20, 
+                        mainModels: ['几何A', '几何C', '几何E'],
+                        color: getBrandColor('几何')
+                    },
+                    '极氪': { 
+                        min: 28, 
+                        max: 40, 
+                        mainModels: ['极氪001', '极氪009', '极氪X'],
+                        color: getBrandColor('极氪')
+                    }
+                };
+                
+                // 计算重叠区域
+                const overlaps = [];
+                for (let i = 0; i < brands.length; i++) {
+                    for (let j = i + 1; j < brands.length; j++) {
+                        const brand1 = brands[i], brand2 = brands[j];
+                        const r1 = priceRanges[brand1], r2 = priceRanges[brand2];
+                        if (r1.max > r2.min && r2.max > r1.min) {
+                            overlaps.push({
+                                brands: [brand1, brand2],
+                                overlap: [Math.max(r1.min, r2.min), Math.min(r1.max, r2.max)]
+                            });
+                        }
+                    }
+                }
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        padding: [4, 8],
+                        textStyle: { fontSize: 10 },
+                        extraCssText: 'max-width: 220px;',
+                        formatter: function(params) {
+                            if (params.seriesName === '价格区间') {
+                                const brand = params.name;
+                                const range = priceRanges[brand];
+                                return `${brand}<br/>价格区间: <b>${range.min} - ${range.max} 万元</b><br/>主力车型: ${range.mainModels.join('、')}`;
+                            }
+                            return '';
+                        }
+                    },
+                    grid: { left: '10%', right: '5%', bottom: '12%', top: '15%', containLabel: true },
+                    xAxis: {
+                        type: 'category',
+                        data: brands,
+                        axisLabel: { fontSize: 11, color: '#1B3A8D', fontWeight: 'bold' },
+                        axisLine: { lineStyle: { color: '#cbd5e1' } }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '价格区间 (万元)',
+                        nameTextStyle: { fontSize: 10, color: '#1B3A8D' },
+                        axisLabel: { fontSize: 9, color: '#666' },
+                        splitLine: { lineStyle: { type: 'dashed', color: '#e2e8f0' } },
+                        min: 0,
+                        max: 45
+                    },
+                    series: [
+                        {
+                            name: '价格区间',
+                            type: 'scatter',
+                            data: brands.map((brand, index) => {
+                                const range = priceRanges[brand];
+                                return {
+                                    name: brand,
+                                    value: [index, (range.min + range.max) / 2],
+                                    symbolSize: (range.max - range.min) * 3,
+                                    itemStyle: { color: range.color, opacity: 0.7, borderColor: '#fff', borderWidth: 1 }
+                                };
+                            })
+                        },
+                        {
+                            type: 'scatter',
+                            data: [],  // 空系列仅用于 markArea
+                            markArea: {
+                                silent: true,
+                                itemStyle: {
+                                    color: 'rgba(239, 68, 68, 0.2)',
+                                    borderColor: 'rgba(239, 68, 68, 0.6)',
+                                    borderWidth: 1.5,
+                                    borderType: 'dashed'
+                                },
+                                data: overlaps.map(overlap => {
+                                    const idx1 = brands.indexOf(overlap.brands[0]);
+                                    const idx2 = brands.indexOf(overlap.brands[1]);
+                                    return [
+                                        { coord: [idx1 - 0.4, overlap.overlap[0]] },
+                                        { coord: [idx2 + 0.4, overlap.overlap[1]] }
+                                    ];
+                                })
+                            }
+                        }
+                    ]
+                };
+                priceMainChart.setOption(option);
+            }
+            
+            // ==================== 根据下拉框选择切换 ====================
+            const select = document.getElementById('priceMainSelect');
+            const subtitle = document.getElementById('priceSubtitle');
+            
+            function switchChart(value) {
+                if (value === 'brand') {
+                    subtitle.textContent = '平均价格 - 分品牌线';
+                    drawLineChart('brand');
+                } else if (value === 'series') {
+                    subtitle.textContent = '平均价格 - 分车系';
+                    drawLineChart('series');
+                } else if (value === 'model') {
+                    subtitle.textContent = '平均价格 - 分车型 (部分车型)';
+                    drawLineChart('model');
+                } else if (value === 'heatmap') {
+                    subtitle.textContent = '车型-月份成交价热力图';
+                    drawHeatmap();
+                } else if (value === 'overlap') {
+                    subtitle.textContent = '品牌价格重叠分析';
+                    drawOverlapChart();
+                }
+            }
+            
+            select.addEventListener('change', function(e) {
+                switchChart(e.target.value);
+            });
+            
+            // 默认显示分品牌线
+            switchChart('brand');
+            
+            window.addEventListener('resize', () => priceMainChart.resize());
+        }
+        
+        // ==================== 预算执行表功能 ====================
+        function showBudgetModal() {
+            document.getElementById('budgetModal').style.display = 'flex';
+            setTimeout(() => initBudgetModalContent(), 100);
+        }
+        
+        function closeBudgetModal() {
+            document.getElementById('budgetModal').style.display = 'none';
+        }
+        
+        function initBudgetModalContent() {
+            const content = document.getElementById('budget-modal-content');
+            const brandsData = [
+                { name: "吉利品牌", modules: [ { name: "中国星", isDomestic: true }, { name: "银河", isDomestic: true }, { name: "几何", isDomestic: true }, { name: "国际", isDomestic: false }, { name: "出口宝腾", isDomestic: false } ] },
+                { name: "极氪", modules: [ { name: "国内", isDomestic: true }, { name: "国际", isDomestic: false } ] },
+                { name: "领克", modules: [ { name: "国内", isDomestic: true }, { name: "国际", isDomestic: false } ] },
+                { name: "翼真", modules: [ { name: "国内", isDomestic: true }, { name: "国际", isDomestic: false } ] }
+            ];
+            
+            function randomBetween(min,max,decimal=1) { return parseFloat((Math.random()*(max-min)+min).toFixed(decimal)); }
+            function getCompletionClass(rate) { return rate>=105 ? "completion-high" : rate>=100 ? "completion-good" : rate>=95 ? "completion-warning" : "completion-low"; }
+            function formatNumber(num) { return num.toFixed(1); }
+            
+            function generateProfessionalData() {
+                const modulesData = [];
+                let totalMonthlyBudget=0, totalMonthlyActual=0, totalCumulativeBudget=0, totalCumulativeActual=0, totalYearlyBudget=0;
+                
+                brandsData.forEach(brand => {
+                    let brandMonthlyBudget=0, brandMonthlyActual=0, brandCumulativeBudget=0, brandCumulativeActual=0, brandYearlyBudget=0, brandRowCount=0;
+                    
+                    brand.modules.forEach((module, index) => {
+                        let baseMonthlyBudget;
+                        if (brand.name === "吉利品牌") baseMonthlyBudget = module.isDomestic ? (index===0?42:index===1?36:22) : (index===3?16:10);
+                        else if (brand.name === "极氪") baseMonthlyBudget = module.isDomestic ? 30 : 14;
+                        else if (brand.name === "领克") baseMonthlyBudget = module.isDomestic ? 26 : 11;
+                        else baseMonthlyBudget = module.isDomestic ? 14 : 7;
+                        
+                        const monthlyBudget = baseMonthlyBudget;
+                        const variance = randomBetween(-0.08, 0.12, 2);
+                        const monthlyActual = parseFloat((monthlyBudget * (1 + variance)).toFixed(1));
+                        const monthlyCompletion = parseFloat((monthlyActual / monthlyBudget * 100).toFixed(1));
+                        
+                        const cumulativeMultiplier = randomBetween(2.8, 3.2, 1);
+                        const cumulativeBudget = parseFloat((monthlyBudget * cumulativeMultiplier).toFixed(1));
+                        const cumulativeActual = parseFloat((monthlyActual * cumulativeMultiplier * (1 + randomBetween(-0.04,0.04,2))).toFixed(1));
+                        const cumulativeCompletion = parseFloat((cumulativeActual / cumulativeBudget * 100).toFixed(1));
+                        
+                        const yearlyMultiplier = randomBetween(3.8, 4.2, 1);
+                        const yearlyBudget = parseFloat((monthlyBudget * yearlyMultiplier).toFixed(1));
+                        const progress = parseFloat((cumulativeActual / yearlyBudget * 100).toFixed(1));
+                        
+                        modulesData.push({
+                            brand: brand.name, module: module.name,
+                            monthlyBudget, monthlyActual, monthlyCompletion,
+                            cumulativeBudget, cumulativeActual, cumulativeCompletion,
+                            yearlyBudget, progress, isDomestic: module.isDomestic,
+                            rowClass: "data-row", isFirstRow: index === 0
+                        });
+                        
+                        brandRowCount++;
+                        brandMonthlyBudget += monthlyBudget;
+                        brandMonthlyActual += monthlyActual;
+                        brandCumulativeBudget += cumulativeBudget;
+                        brandCumulativeActual += cumulativeActual;
+                        brandYearlyBudget += yearlyBudget;
+                    });
+                    
+                    const brandMonthlyCompletion = parseFloat((brandMonthlyActual / brandMonthlyBudget * 100).toFixed(1));
+                    const brandCumulativeCompletion = parseFloat((brandCumulativeActual / brandCumulativeBudget * 100).toFixed(1));
+                    const brandProgress = parseFloat((brandCumulativeActual / brandYearlyBudget * 100).toFixed(1));
+                    
+                    modulesData.push({
+                        brand: brand.name, module: `${brand.name}小计`,
+                        monthlyBudget: brandMonthlyBudget, monthlyActual: brandMonthlyActual, monthlyCompletion: brandMonthlyCompletion,
+                        cumulativeBudget: brandCumulativeBudget, cumulativeActual: brandCumulativeActual, cumulativeCompletion: brandCumulativeCompletion,
+                        yearlyBudget: brandYearlyBudget, progress: brandProgress,
+                        rowClass: "subtotal-row", isSubtotal: true, rowspan: brandRowCount + 1
+                    });
+                    
+                    totalMonthlyBudget += brandMonthlyBudget;
+                    totalMonthlyActual += brandMonthlyActual;
+                    totalCumulativeBudget += brandCumulativeBudget;
+                    totalCumulativeActual += brandCumulativeActual;
+                    totalYearlyBudget += brandYearlyBudget;
+                });
+                
+                const totalMonthlyCompletion = parseFloat((totalMonthlyActual / totalMonthlyBudget * 100).toFixed(1));
+                const totalCumulativeCompletion = parseFloat((totalCumulativeActual / totalCumulativeBudget * 100).toFixed(1));
+                const totalProgress = parseFloat((totalCumulativeActual / totalYearlyBudget * 100).toFixed(1));
+                
+                modulesData.push({
+                    brand: "合计", module: "总计",
+                    monthlyBudget: totalMonthlyBudget, monthlyActual: totalMonthlyActual, monthlyCompletion: totalMonthlyCompletion,
+                    cumulativeBudget: totalCumulativeBudget, cumulativeActual: totalCumulativeActual, cumulativeCompletion: totalCumulativeCompletion,
+                    yearlyBudget: totalYearlyBudget, progress: totalProgress,
+                    rowClass: "total-row", isTotal: true
+                });
+                
+                return modulesData;
+            }
+            
+            function generateTableHTML(data) {
+                let html = `<div style="width:100%; overflow-x:auto;"><table style="width:100%; border-collapse:collapse; min-width:1000px; font-size:11px;">
+                    <thead><tr><th rowspan="2" style="background-color:#0056a6; color:white; padding:11px 6px; border:1px solid #0056a6; text-align:center;">品牌</th><th rowspan="2" style="background-color:#0056a6; color:white; padding:11px 6px; border:1px solid #0056a6; text-align:center;">模块</th><th colspan="3" style="background-color:#0056a6; color:white; padding:11px 6px; border:1px solid #0056a6; text-align:center;">当月</th><th colspan="3" style="background-color:#0056a6; color:white; padding:11px 6px; border:1px solid #0056a6; text-align:center;">累计</th><th colspan="2" style="background-color:#0056a6; color:white; padding:11px 6px; border:1px solid #0056a6; text-align:center;">累计进度</th></tr>
+                    <tr><th style="background-color:#f0f7ff; padding:10px 6px; text-align:center;">预算</th><th style="background-color:#f0f7ff; padding:10px 6px; text-align:center;">实际</th><th style="background-color:#f0f7ff; padding:10px 6px; text-align:center;">完成率</th><th style="background-color:#f0f7ff; padding:10px 6px; text-align:center;">预算</th><th style="background-color:#f0f7ff; padding:10px 6px; text-align:center;">实际</th><th style="background-color:#f0f7ff; padding:10px 6px; text-align:center;">完成率</th><th style="background-color:#f0f7ff; padding:10px 6px; text-align:center;">全年</th><th style="background-color:#f0f7ff; padding:10px 6px; text-align:center;">进度</th></tr></thead><tbody>`;
+                
+                let currentBrand = "", brandDataRows = [];
+                data.forEach((item, index) => {
+                    if (item.isSubtotal) {
+                        const rowspan = item.rowspan;
+                        if (brandDataRows.length > 0) {
+                            const firstRowIndex = brandDataRows[0];
+                            html = html.replace(
+                                `<td style="background-color: #f8fbff; font-weight: 600; color: #0056a6; border-right: 2px solid #d1e0f0; border-left: 2px solid #d1e0f0; vertical-align: middle; text-align: center; width: 80px;"></td>`,
+                                `<td style="background-color: #f8fbff; font-weight: 600; color: #0056a6; border-right: 2px solid #d1e0f0; border-left: 2px solid #d1e0f0; vertical-align: middle; text-align: center; width: 80px;" rowspan="${rowspan}">${item.brand}</td>`
+                            );
+                            brandDataRows = [];
+                        }
+                        const completionClass1Style = getCompletionClass(item.monthlyCompletion) === "completion-high" ? "background-color:rgba(0,200,83,0.08);color:#00a652;border:1px solid rgba(0,200,83,0.15);" : getCompletionClass(item.monthlyCompletion) === "completion-good" ? "background-color:rgba(33,150,243,0.08);color:#0077cc;border:1px solid rgba(33,150,243,0.15);" : getCompletionClass(item.monthlyCompletion) === "completion-warning" ? "background-color:rgba(255,193,7,0.08);color:#ff9800;border:1px solid rgba(255,193,7,0.15);" : "background-color:rgba(244,67,54,0.08);color:#f44336;border:1px solid rgba(244,67,54,0.15);";
+                        const completionClass2Style = getCompletionClass(item.cumulativeCompletion) === "completion-high" ? "background-color:rgba(0,200,83,0.08);color:#00a652;border:1px solid rgba(0,200,83,0.15);" : getCompletionClass(item.cumulativeCompletion) === "completion-good" ? "background-color:rgba(33,150,243,0.08);color:#0077cc;border:1px solid rgba(33,150,243,0.15);" : getCompletionClass(item.cumulativeCompletion) === "completion-warning" ? "background-color:rgba(255,193,7,0.08);color:#ff9800;border:1px solid rgba(255,193,7,0.15);" : "background-color:rgba(244,67,54,0.08);color:#f44336;border:1px solid rgba(244,67,54,0.15);";
+                        html += `<tr style="background-color:#f0f7ff; font-weight:700; color:#003366; border-top:2px solid #c2d9f0; border-bottom:2px solid #c2d9f0;">
+                            <td style="text-align:left; padding-left:10px; border-left:2px solid #c2d9f0; font-weight:600; color:#0056a6; padding:6px;">${item.module}</td>
+                            <td>${formatNumber(item.monthlyBudget)}</td><td>${formatNumber(item.monthlyActual)}</td>
+                            <td><span style="font-weight:600; padding:3px 5px; border-radius:2px; display:inline-block; min-width:55px; ${completionClass1Style}">${item.monthlyCompletion}%</span></td>
+                            <td>${formatNumber(item.cumulativeBudget)}</td><td>${formatNumber(item.cumulativeActual)}</td>
+                            <td><span style="font-weight:600; padding:3px 5px; border-radius:2px; display:inline-block; min-width:55px; ${completionClass2Style}">${item.cumulativeCompletion}%</span></td>
+                            <td>${formatNumber(item.yearlyBudget)}</td><td>${item.progress}%</td></tr>`;
+                    } else if (item.isTotal) {
+                        const completionClass1Style = getCompletionClass(item.monthlyCompletion) === "completion-high" ? "background-color:rgba(0,200,83,0.08);color:#00a652;border:1px solid rgba(0,200,83,0.15);" : getCompletionClass(item.monthlyCompletion) === "completion-good" ? "background-color:rgba(33,150,243,0.08);color:#0077cc;border:1px solid rgba(33,150,243,0.15);" : getCompletionClass(item.monthlyCompletion) === "completion-warning" ? "background-color:rgba(255,193,7,0.08);color:#ff9800;border:1px solid rgba(255,193,7,0.15);" : "background-color:rgba(244,67,54,0.08);color:#f44336;border:1px solid rgba(244,67,54,0.15);";
+                        const completionClass2Style = getCompletionClass(item.cumulativeCompletion) === "completion-high" ? "background-color:rgba(0,200,83,0.08);color:#00a652;border:1px solid rgba(0,200,83,0.15);" : getCompletionClass(item.cumulativeCompletion) === "completion-good" ? "background-color:rgba(33,150,243,0.08);color:#0077cc;border:1px solid rgba(33,150,243,0.15);" : getCompletionClass(item.cumulativeCompletion) === "completion-warning" ? "background-color:rgba(255,193,7,0.08);color:#ff9800;border:1px solid rgba(255,193,7,0.15);" : "background-color:rgba(244,67,54,0.08);color:#f44336;border:1px solid rgba(244,67,54,0.15);";
+                        html += `<tr style="background-color:#0056a6; color:white; font-weight:700;">
+                            <td style="background-color:#f8fbff; font-weight:600; color:#0056a6; border-right:2px solid #d1e0f0; border-left:2px solid #d1e0f0; vertical-align:middle; text-align:center;">${item.brand}</td>
+                            <td style="text-align:left; padding-left:10px;">${item.module}</td>
+                            <td>${formatNumber(item.monthlyBudget)}</td><td>${formatNumber(item.monthlyActual)}</td>
+                            <td><span style="font-weight:600; padding:3px 5px; border-radius:2px; display:inline-block; min-width:55px; ${completionClass1Style}">${item.monthlyCompletion}%</span></td>
+                            <td>${formatNumber(item.cumulativeBudget)}</td><td>${formatNumber(item.cumulativeActual)}</td>
+                            <td><span style="font-weight:600; padding:3px 5px; border-radius:2px; display:inline-block; min-width:55px; ${completionClass2Style}">${item.cumulativeCompletion}%</span></td>
+                            <td>${formatNumber(item.yearlyBudget)}</td><td>${item.progress}%</td></tr>`;
+                    } else {
+                        if (item.brand !== currentBrand) {
+                            currentBrand = item.brand;
+                            html += `<tr><td style="background-color:#f8fbff; font-weight:600; color:#0056a6; border-right:2px solid #d1e0f0; border-left:2px solid #d1e0f0; vertical-align:middle; text-align:center; width:80px;"></td>
+                                <td style="text-align:left; padding-left:10px; font-weight:500; color:#333; padding:8px 6px; border:1px solid #e1e8f0;">${item.module}</td>`;
+                            brandDataRows.push(index);
+                        } else {
+                            html += `<tr><td style="text-align:left; padding-left:10px; font-weight:500; color:#333; padding:8px 6px; border:1px solid #e1e8f0;">${item.module}</td>`;
+                        }
+                        const completionClass1Style = getCompletionClass(item.monthlyCompletion) === "completion-high" ? "background-color:rgba(0,200,83,0.08);color:#00a652;border:1px solid rgba(0,200,83,0.15);" : getCompletionClass(item.monthlyCompletion) === "completion-good" ? "background-color:rgba(33,150,243,0.08);color:#0077cc;border:1px solid rgba(33,150,243,0.15);" : getCompletionClass(item.monthlyCompletion) === "completion-warning" ? "background-color:rgba(255,193,7,0.08);color:#ff9800;border:1px solid rgba(255,193,7,0.15);" : "background-color:rgba(244,67,54,0.08);color:#f44336;border:1px solid rgba(244,67,54,0.15);";
+                        const completionClass2Style = getCompletionClass(item.cumulativeCompletion) === "completion-high" ? "background-color:rgba(0,200,83,0.08);color:#00a652;border:1px solid rgba(0,200,83,0.15);" : getCompletionClass(item.cumulativeCompletion) === "completion-good" ? "background-color:rgba(33,150,243,0.08);color:#0077cc;border:1px solid rgba(33,150,243,0.15);" : getCompletionClass(item.cumulativeCompletion) === "completion-warning" ? "background-color:rgba(255,193,7,0.08);color:#ff9800;border:1px solid rgba(255,193,7,0.15);" : "background-color:rgba(244,67,54,0.08);color:#f44336;border:1px solid rgba(244,67,54,0.15);";
+                        html += `<td>${formatNumber(item.monthlyBudget)}</td><td>${formatNumber(item.monthlyActual)}</td>
+                            <td><span style="font-weight:600; padding:3px 5px; border-radius:2px; display:inline-block; min-width:55px; ${completionClass1Style}">${item.monthlyCompletion}%</span></td>
+                            <td>${formatNumber(item.cumulativeBudget)}</td><td>${formatNumber(item.cumulativeActual)}</td>
+                            <td><span style="font-weight:600; padding:3px 5px; border-radius:2px; display:inline-block; min-width:55px; ${completionClass2Style}">${item.cumulativeCompletion}%</span></td>
+                            <td>${formatNumber(item.yearlyBudget)}</td><td>${item.progress}%</td></tr>`;
+                    }
+                });
+                html += `</tbody></table></div>`;
+                return html;
+            }
+            
+            const professionalData = generateProfessionalData();
+            content.innerHTML = generateTableHTML(professionalData);
+        }
+        
+        // ==================== 初始化所有图表 ====================
+        function initAllCharts() {
+            updateKeyIndicators();
+            initMarketOverviewChart();
+            initMarketingResourcesChart();   // 模块二（收入多维度分析）
+            initRevenueAnalysisChart();       // 模块三（销量多维度分析）
+            initPriceSystemChart();           // 模块四（价格体系与折扣分析）包含五个选项
+            
+            window.addEventListener('resize', function() {
+                if (overallChart) overallChart.resize();
+                if (regionChart) regionChart.resize();
+                if (brandChart) brandChart.resize();
+                if (modelChart) modelChart.resize();
+                if (marketingChart) marketingChart.resize();
+                if (priceMainChart) priceMainChart.resize();
+            });
+            
+            // 绑定下钻按钮事件
+            document.getElementById('modelSalesDrillBtn').addEventListener('click', function() {
+                showModelSalesModal();
+            });
+            
+            // 模态框外部点击关闭
+            document.getElementById('modelSalesModal').addEventListener('click', function(e) {
+                if (e.target === this) closeModelSalesModal();
+            });
+            document.getElementById('budgetModal').addEventListener('click', function(e) {
+                if (e.target === this) closeBudgetModal();
+            });
+        }
+        
+        window.addEventListener('DOMContentLoaded', initAllCharts);
+        
+        // 挂载关闭函数到全局
+        window.closeBudgetModal = closeBudgetModal;
+        window.closeModelSalesModal = closeModelSalesModal;
+    </script>
+</body>
+</html>

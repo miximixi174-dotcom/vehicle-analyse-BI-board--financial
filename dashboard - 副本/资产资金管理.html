@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉利汽车 · 资金资产效率全景看板 (气泡图修复)</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --geely-blue: #003399;
+            --geely-light-blue: #0055cc;
+            --geely-accent: #00a0e9;
+            --geely-dark: #001a4d;
+            --mbb-gray-1: #f8f9fa;
+            --mbb-gray-2: #e9ecef;
+            --mbb-gray-3: #dee2e6;
+            --mbb-gray-4: #6c757d;
+            --mbb-gray-5: #495057;
+            --mbb-gray-6: #212529;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --module-1-color: #003399;
+            --module-2-color: #28a745;
+            --module-3-color: #ff6b35;
+            --module-4-color: #6f42c1;
+            --geli-blue: var(--geely-blue);
+            --geli-light-blue: var(--geely-light-blue);
+            --geli-accent-blue: var(--geely-accent);
+            --geli-bg: var(--mbb-gray-1);
+            --card-bg: #ffffff;
+            --shadow-light: rgba(0, 51, 153, 0.08);
+            --shadow-medium: rgba(0, 51, 153, 0.12);
+            --text-primary: var(--geely-blue);
+            --text-secondary: var(--mbb-gray-4);
+            --text-tertiary: var(--mbb-gray-5);
+            --border-color: rgba(0, 51, 153, 0.1);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: var(--geli-bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 20px;
+            min-height: 100vh;
+            letter-spacing: 0.3px;
+        }
+        
+        .dashboard-container {
+            max-width: 1920px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--geely-blue) 0%, var(--geely-light-blue) 100%);
+            border-radius: 16px;
+            padding: 20px 30px;
+            color: white;
+            box-shadow: 0 10px 30px var(--shadow-medium);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 5px; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .subtitle { font-size: 1rem; opacity: 0.9; font-weight: 300; }
+        
+        .kpi-section { margin: 0 0 20px 0; }
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 12px;
+            box-shadow: 0 6px 15px var(--shadow-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border-top: 4px solid var(--geely-blue);
+        }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px var(--shadow-medium); }
+        .kpi-value { font-size: 2rem; font-weight: 700; margin-bottom: 5px; color: var(--geely-blue); }
+        .kpi-label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+        .kpi-trend { font-size: 0.75rem; margin-top: 6px; display: flex; align-items: center; justify-content: center; }
+        .kpi-trend.positive { color: var(--success-green); }
+        .kpi-trend.negative { color: var(--danger-red); }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, auto);
+            gap: 20px;
+        }
+        @media (max-width: 1400px) { .main-content { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, auto); } }
+        @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; grid-template-rows: auto; } }
+        
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 25px var(--shadow-light);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px var(--shadow-medium); }
+        .chart-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--geely-blue), var(--geely-light-blue));
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            position: relative;
+            gap: 8px;
+        }
+        .card-title { font-size: 1.2rem; font-weight: 700; color: var(--geely-blue); display: flex; align-items: center; gap: 8px; line-height: 1.3; }
+        .card-subtitle { font-size: 0.85rem; color: var(--text-tertiary); font-weight: 400; line-height: 1.4; margin-top: 4px; }
+        
+        .chart-container { flex: 1; position: relative; min-height: 260px; width: 100%; }
+        #chart1, #chart2, #chart3, #chart4, #chart5, #chart6 { width: 100%; height: 100%; min-height: 260px; }
+        
+        .selector-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            z-index: 10;
+        }
+        .indicator-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            min-width: 120px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+        .indicator-select:hover { border-color: var(--geely-blue); box-shadow: 0 2px 8px rgba(0,51,153,0.15); }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 5px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background-color: var(--mbb-gray-1);
+        }
+        .tab-btn {
+            padding: 6px 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active { background-color: var(--geely-blue); color: white; }
+        .tab-btn:not(.active):hover { background-color: var(--mbb-gray-2); }
+        
+        .footer {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 15px 30px;
+            box-shadow: 0 8px 25px var(--shadow-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+        }
+        .last-updated { color: var(--text-tertiary); font-size: 0.85rem; }
+        
+        .positive { color: var(--success-green); }
+        .negative { color: var(--danger-red); }
+        .neutral { color: var(--geely-blue); }
+        
+        @media (max-width: 768px) {
+            .kpi-cards { grid-template-columns: repeat(3, 1fr); }
+            .kpi-value { font-size: 1.8rem; }
+            .header { height: auto; min-height: 120px; }
+        }
+        @media (max-width: 480px) { .kpi-cards { grid-template-columns: repeat(2, 1fr); } }
+        
+        .chart-card, .kpi-card { animation: fadeInUp 0.6s ease forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 顶部标题区域 -->
+        <div class="header">
+            <h1>吉利汽车 · 资金资产效率全景看板 (气泡图修复)</h1>
+            <div class="subtitle">气泡图已修复 · 下拉框右上统一 · 回款低于发车</div>
+        </div>
+        
+        <!-- 关键指标卡片 (不变) -->
+        <div class="kpi-section">
+            <div class="kpi-cards">
+                <div class="kpi-card"><div class="kpi-value">5.2</div><div class="kpi-label">存货周转率</div><div class="kpi-trend positive">↑ 8.3%</div></div>
+                <div class="kpi-card"><div class="kpi-value">42.6亿</div><div class="kpi-label">应收账款余额</div><div class="kpi-trend negative">↑ 2.1%</div></div>
+                <div class="kpi-card"><div class="kpi-value">9.8%</div><div class="kpi-label">超期库存占比</div><div class="kpi-trend negative">↑ 1.2%</div></div>
+                <div class="kpi-card"><div class="kpi-value">12.4%</div><div class="kpi-label">ROIC</div><div class="kpi-trend positive">↑ 0.8%</div></div>
+                <div class="kpi-card"><div class="kpi-value">58.2%</div><div class="kpi-label">资产负债率</div><div class="kpi-trend positive">↓ 1.5%</div></div>
+                <div class="kpi-card"><div class="kpi-value">32.5亿</div><div class="kpi-label">自由现金流</div><div class="kpi-trend positive">↑ 15.6%</div></div>
+            </div>
+        </div>
+        
+        <!-- 主内容区域：六个板块 (3x2) -->
+        <div class="main-content">
+            <!-- 板块一：营运资金效率 (不变) -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <div><div class="card-title">营运资金效率</div><div class="card-subtitle">存货周转、应收余额及超期积压风险</div></div>
+                    <div class="selector-container"><select class="indicator-select" id="indicatorSelect1"><option value="trend" selected>月度趋势</option><option value="detail">明细下钻</option></select></div>
+                </div>
+                <div class="chart-container"><div id="chart1"></div></div>
+            </div>
+            <!-- 板块二：投资组合效能 (不变) -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <div><div class="card-title">投资组合效能</div><div class="card-subtitle">ROIC仪表盘 & 重点项目回报</div></div>
+                    <div class="selector-container"><select class="indicator-select" id="indicatorSelect2"><option value="current" selected>当期项目</option><option value="history">历史项目</option></select></div>
+                </div>
+                <div class="chart-container"><div id="chart2"></div></div>
+            </div>
+            <!-- 板块三：资本结构与融资成本 (不变) -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <div><div class="card-title">资本结构与融资成本</div><div class="card-subtitle">负债权益构成 & 有息负债明细</div></div>
+                    <div class="selector-container"><select class="indicator-select" id="indicatorSelect3"><option value="tree" selected>资本树状图</option><option value="cost">融资成本表</option></select></div>
+                </div>
+                <div class="chart-container"><div id="chart3"></div></div>
+            </div>
+            <!-- 板块四：现金流健康度 · 结构拆解 (下拉在右上) -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <div><div class="card-title">现金流健康度 · 结构拆解</div><div class="card-subtitle">瀑布图 / 国内·海外OCF折线</div></div>
+                    <div class="selector-container">
+                        <select class="indicator-select" id="viewSelect4">
+                            <option value="waterfall" selected>瀑布图</option>
+                            <option value="ocfLine">经营性现金流拆解 (折线)</option>
+                        </select>
+                        <div class="tab-buttons" id="cashflowTabs">
+                            <button class="tab-btn active" data-tab="domestic">国内</button>
+                            <button class="tab-btn" data-tab="overseas">海外</button>
+                            <button class="tab-btn" data-tab="comparison">对比</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container"><div id="chart4"></div></div>
+            </div>
+            <!-- 板块五：出口回款与外汇敞口 (下拉在右上，气泡图已修复) -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <div><div class="card-title">出口回款 & 外汇敞口</div><div class="card-subtitle">发车回款/及时率/气泡图/国家账龄</div></div>
+                    <div class="selector-container">
+                        <select class="indicator-select" id="indicatorSelect5">
+                            <option value="shipment" selected>出口发车vs回款</option>
+                            <option value="timeliness">回款及时率&周期</option>
+                            <option value="fxBubble">外汇敞口矩阵-气泡图</option>
+                            <option value="fxStack">外汇敞口矩阵-堆叠柱状图 (国家账龄)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container"><div id="chart5"></div></div>
+            </div>
+            <!-- 板块六：国内侧 · 发车收款敞口 (不变) -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <div><div class="card-title">国内侧 · 发车收款敞口</div><div class="card-subtitle">车辆敞口/覆盖率/客户账龄</div></div>
+                    <div class="selector-container">
+                        <select class="indicator-select" id="indicatorSelect6">
+                            <option value="vehicle" selected>车辆数量敞口</option>
+                            <option value="coverage">应收&回款覆盖率</option>
+                            <option value="customerAging">客户账龄堆叠 (逾期率)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container"><div id="chart6"></div></div>
+            </div>
+        </div>
+        
+        <!-- 底部区域 -->
+        <div class="footer">
+            <div class="last-updated">数据更新时间: 2025年8月31日 | 气泡图随机数据修复，确保可见</div>
+            <div class="last-updated">下拉框统一右上，点击图表可下钻</div>
+        </div>
+    </div>
+
+    <script>
+        // ================== 全局颜色 ==================
+        const colors = {
+            geelyBlue: '#003399',
+            geelyLightBlue: '#0055cc',
+            geelyAccent: '#00a0e9',
+            geelyDark: '#001a4d',
+            success: '#28a745',
+            warning: '#ffc107',
+            danger: '#dc3545',
+            gray1: '#f8f9fa',
+            gray2: '#e9ecef',
+            gray3: '#dee2e6',
+            gray4: '#6c757d',
+            module2: '#28a745',
+            module3: '#ff6b35',
+            module4: '#6f42c1',
+            agingColors: ['#003399','#0055cc','#00a0e9','#6f42c1'] // 账龄段配色
+        };
+
+        // ================== 辅助函数 ==================
+        function formatCurrency(value) {
+            if (value >= 1e8) return '¥' + (value / 1e8).toFixed(1) + '亿';
+            if (value >= 1e6) return '¥' + (value / 1e6).toFixed(1) + 'M';
+            if (value >= 1e4) return '¥' + (value / 1e4).toFixed(1) + '万';
+            return '¥' + value.toLocaleString();
+        }
+
+        // ================== 初始化所有图表 ==================
+        function initAllCharts() {
+            initChart1(); initChart2(); initChart3(); initChart4(); initChart5(); initChart6();
+            
+            document.getElementById('indicatorSelect1').addEventListener('change', initChart1);
+            document.getElementById('indicatorSelect2').addEventListener('change', initChart2);
+            document.getElementById('indicatorSelect3').addEventListener('change', initChart3);
+            document.getElementById('indicatorSelect5').addEventListener('change', initChart5);
+            document.getElementById('indicatorSelect6').addEventListener('change', initChart6);
+            document.getElementById('viewSelect4').addEventListener('change', initChart4);
+            
+            const tabs = document.querySelectorAll('#cashflowTabs .tab-btn');
+            tabs.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const view = document.getElementById('viewSelect4').value;
+                    if (view !== 'waterfall') return; // 非瀑布图模式忽略tab点击
+                    document.querySelectorAll('#cashflowTabs .tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    initChart4();
+                });
+            });
+            
+            window.addEventListener('resize', function() {
+                ['chart1','chart2','chart3','chart4','chart5','chart6'].forEach(id => {
+                    const chart = echarts.getInstanceByDom(document.getElementById(id));
+                    chart && chart.resize();
+                });
+            });
+        }
+
+        // ---- 板块一 (不变) ----
+        function initChart1() {
+            const chart = echarts.init(document.getElementById('chart1'));
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月'];
+            const inventoryTurnover = [4.8, 4.9, 5.0, 5.1, 5.2, 5.3, 5.1, 5.0];  
+            const receivableBalance = [38.2, 39.5, 41.0, 42.3, 43.1, 42.6, 41.8, 40.5]; 
+            const overdueRatio = [12.5, 11.8, 11.0, 10.5, 10.0, 9.8, 10.2, 11.0]; 
+            const option = {
+                tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                legend: { data: ['存货周转率(次)', '应收账款余额(亿元)', '超期库存占比(%)'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} },
+                grid: { left: '8%', right: '8%', top: '25%', bottom: '10%' },
+                xAxis: { type: 'category', data: months, axisLabel: { fontSize: 10 } },
+                yAxis: [
+                    { type: 'value', name: '周转率(次)', min: 4, max: 6, position: 'left', nameTextStyle: {color: colors.geelyBlue} },
+                    { type: 'value', name: '金额/占比', min: 0, max: 50, position: 'right', axisLabel: { formatter: '{value}' }, nameTextStyle: {color: colors.geelyLightBlue} }
+                ],
+                series: [
+                    { name: '存货周转率(次)', type: 'bar', data: inventoryTurnover, barWidth: '30%', itemStyle: { color: colors.geelyBlue } },
+                    { name: '应收账款余额(亿元)', type: 'bar', data: receivableBalance, barWidth: '30%', yAxisIndex: 1, itemStyle: { color: colors.geelyLightBlue } },
+                    { name: '超期库存占比(%)', type: 'line', data: overdueRatio, yAxisIndex: 1, smooth: true, lineStyle: { width: 3, color: colors.geelyAccent }, symbol: 'circle' },
+                    { name: '预警线(10%)', type: 'line', data: Array(months.length).fill(10), yAxisIndex: 1, lineStyle: { type: 'dashed', color: colors.danger }, symbol: 'none' }
+                ]
+            };
+            chart.setOption(option);
+            chart.on('click', function() { alert('模拟下钻：查看库存明细或应收账龄'); });
+        }
+
+        // ---- 板块二 (不变) ----
+        function initChart2() {
+            const chart = echarts.init(document.getElementById('chart2'));
+            const selectVal = document.getElementById('indicatorSelect2').value;
+            const projectsCurrent = [ { name: '新能源研发中心', roi: 18.5, status: '进行中' }, { name: '东南亚基地', roi: 12.2, status: '已完成' }, { name: '智能驾驶投资', roi: 9.8, status: '进行中' }, { name: '电池合资企业', roi: 15.6, status: '已完成' }, { name: '欧洲销售网络', roi: 7.2, status: '进行中' } ];
+            const projectsHistory = [ { name: '老款平台升级', roi: 13.2, status: '已完成' }, { name: '南美工厂', roi: 10.5, status: '已完成' }, { name: '车联网投资', roi: 8.1, status: '已完成' }, { name: '混动技术', roi: 16.3, status: '已完成' }, { name: '出行服务', roi: 6.5, status: '已完成' } ];
+            const projects = selectVal === 'current' ? projectsCurrent : projectsHistory;
+            const roicValue = 12.4;
+            const option = {
+                tooltip: { trigger: 'item', formatter: function(params) {
+                    if(params.componentType === 'series' && params.seriesType === 'gauge') return 'ROIC: 12.4%<br/>目标: 15.0%<br/>行业标杆: 10.8%';
+                    else if(params.seriesType === 'bar') return params.name + '<br/>ROI: ' + params.value + '%<br/>状态: ' + projects[params.dataIndex].status;
+                    return params.name;
+                } },
+                grid: [ { left: '5%', top: '15%', width: '45%', height: '70%' }, { left: '55%', top: '15%', width: '40%', height: '70%' } ],
+                xAxis: [ { show: false }, { gridIndex: 1, type: 'value', max: 20, axisLabel: { fontSize: 8 }, splitLine: { show: false } } ],
+                yAxis: [ { show: false }, { gridIndex: 1, type: 'category', data: projects.map(p => p.name.length>6 ? p.name.slice(0,6)+'...' : p.name), axisLabel: { fontSize: 8 } } ],
+                series: [
+                    { type: 'gauge', center: ['25%', '45%'], radius: '70%', min:0, max:20, splitNumber:5,
+                      axisLine: { lineStyle: { width:10, color: [[0.3,colors.geelyLightBlue],[0.7,colors.geelyBlue],[1,colors.geelyDark]] } },
+                      pointer: { itemStyle: { color: colors.geelyBlue } }, detail: { offsetCenter: [0,'50%'], fontSize:14, formatter:'{value}%', color:colors.geelyBlue },
+                      title: { offsetCenter: [0,'75%'], fontSize:9, color:colors.geelyLightBlue }, data: [{ value: roicValue, name: 'ROIC' }] },
+                    { type: 'bar', xAxisIndex:1, yAxisIndex:1, data: projects.map(p => ({ value:p.roi, name:p.name, itemStyle:{ color: p.roi>=15?colors.geelyBlue:(p.roi>=10?colors.geelyLightBlue:colors.geelyAccent) } })),
+                      barWidth:'60%', label: { show: true, position:'right', formatter:'{c}%', fontSize:9 } }
+                ]
+            };
+            chart.setOption(option);
+            chart.on('click', function(params) { if(params.componentType==='series' && params.seriesType==='bar') alert('投资项目: ' + params.name + ', ROI: ' + params.value + '%'); });
+        }
+
+        // ---- 板块三 (不变) ----
+        function initChart3() {
+            const chart = echarts.init(document.getElementById('chart3'));
+            const selectVal = document.getElementById('indicatorSelect3').value;
+            if(selectVal === 'tree') {
+                const data = { name: '总资产 1000亿', children: [
+                    { name: '股东权益 418亿', value:418, itemStyle:{color:colors.geelyBlue}, children:[ {name:'股本150',value:150,itemStyle:{color:colors.geelyLightBlue}}, {name:'资本公积120',value:120,itemStyle:{color:colors.geelyAccent}}, {name:'留存收益148',value:148,itemStyle:{color:'#6B8FCE'}} ] },
+                    { name: '有息负债 420亿', value:420, itemStyle:{color:colors.module3}, children:[ { name:'境内融资280',value:280, children:[ {name:'银行贷款(4.2%)150',value:150}, {name:'债券(4.8%)100',value:100}, {name:'其他(5.1%)30',value:30} ] }, { name:'海外融资140',value:140, children:[ {name:'美元债(3.8%)90',value:90}, {name:'欧元债(3.5%)50',value:50} ] } ] },
+                    { name: '无息负债 162亿', value:162, itemStyle:{color:colors.success}, children:[ {name:'应付账款85',value:85}, {name:'预收42',value:42}, {name:'其他应付35',value:35} ] }
+                ] };
+                const option = { tooltip: { formatter: '{b}: {c}亿' }, series: { type: 'tree', data: [data], left:'2%', right:'2%', top:'8%', bottom:'10%', symbol:'rect', symbolSize:[50,20], orient:'vertical', expandAndCollapse:false, label: { position:'inside', fontSize:7, formatter:'{b}', color:'#fff' }, lineStyle: { color:colors.geelyBlue, width:1.5 }, itemStyle: { borderColor:'#fff', borderWidth:1 } } };
+                chart.setOption(option);
+            } else {
+                const costData = [ { name:'银行贷款(境内)', cost:4.2, amount:150 }, { name:'债券(境内)', cost:4.8, amount:100 }, { name:'其他境内', cost:5.1, amount:30 }, { name:'美元债', cost:3.8, amount:90 }, { name:'欧元债', cost:3.5, amount:50 } ];
+                const option = { tooltip: { trigger:'axis', formatter:'{b}<br/>成本: {c}%<br/>金额: ' + costData.map(d=>d.amount)[0] + '亿' }, grid:{ left:'20%', right:'5%', top:'15%', bottom:'10%' }, xAxis:{ type:'value', name:'融资成本 %', axisLabel:{fontSize:9}, max:6 }, yAxis:{ type:'category', data:costData.map(d=>d.name), axisLabel:{fontSize:8} }, series:[{ type:'bar', data:costData.map(d=>d.cost), barWidth:12, itemStyle:{color:colors.geelyBlue}, label:{show:true, position:'right', formatter:'{c}%', fontSize:8} }] };
+                chart.setOption(option);
+            }
+            chart.on('click', function(params) { if(params.data.value) alert(params.name + ' : ' + (params.data.value || params.value) + '亿元或%'); });
+        }
+
+        // ---- 板块四：瀑布图 / OCF折线 (保持不变) ----
+        function initChart4() {
+            const chart = echarts.init(document.getElementById('chart4'));
+            const view = document.getElementById('viewSelect4').value;
+            const activeTab = document.querySelector('#cashflowTabs .tab-btn.active').dataset.tab;
+            
+            if (view === 'ocfLine') {
+                const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+                const domesticOCF = [820000, 880000, 950000, 1020000, 1100000, 1150000, 1180000, 1250000, 1300000, 1280000, 1220000, 1350000];
+                const overseasOCF = [520000, 580000, 620000, 680000, 750000, 820000, 880000, 920000, 970000, 1020000, 980000, 1050000];
+                const totalOCF = domesticOCF.map((d,i) => d + overseasOCF[i]);
+                
+                const option = {
+                    tooltip: { trigger: 'axis', valueFormatter: (v) => formatCurrency(v) },
+                    legend: { data: ['OCF总额', '国内OCF', '海外OCF'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} },
+                    grid: { left: '8%', right: '8%', top: '20%', bottom: '10%' },
+                    xAxis: { type: 'category', data: months, axisLabel: { fontSize: 10 } },
+                    yAxis: { type: 'value', name: '金额 (元)', nameTextStyle: {color: colors.geelyBlue}, axisLabel: { formatter: v => formatCurrency(v) } },
+                    series: [
+                        { name: 'OCF总额', type: 'line', data: totalOCF, smooth: true, lineStyle: { width: 3, color: colors.geelyDark }, symbol: 'circle' },
+                        { name: '国内OCF', type: 'line', data: domesticOCF, smooth: true, lineStyle: { width: 2, color: colors.geelyBlue }, symbol: 'diamond' },
+                        { name: '海外OCF', type: 'line', data: overseasOCF, smooth: true, lineStyle: { width: 2, color: colors.module3 }, symbol: 'square' },
+                        { name: '零基线', type: 'line', data: Array(months.length).fill(0), lineStyle: { type: 'dashed', color: colors.gray4, width: 1 }, symbol: 'none', showSymbol: false }
+                    ]
+                };
+                chart.setOption(option);
+            } else {
+                const domesticDetails = [ { name: "期初现金", value: 2500000, percentage: null, direction: "期初/期末" }, { name: "销售回款", value: 1850000, percentage: "74.0%", direction: "现金流入" }, { name: "采购付款", value: -850000, percentage: "-34.0%", direction: "现金流出" }, { name: "税费", value: -320000, percentage: "-12.8%", direction: "现金流出" }, { name: "工资", value: -280000, percentage: "-11.2%", direction: "现金流出" }, { name: "运费", value: -150000, percentage: "-6.0%", direction: "现金流出" }, { name: "其他", value: -50000, percentage: "-2.0%", direction: "现金流出" }, { name: "经营性现金流", value: 850000, percentage: "34.0%", direction: "净现金流" }, { name: "期末现金", value: 3350000, percentage: null, direction: "期初/期末" } ];
+                const overseasDetails = [ { name: "期初现金", value: 1800000, percentage: null, direction: "期初/期末" }, { name: "销售回款", value: 1350000, percentage: "75.0%", direction: "现金流入" }, { name: "采购付款", value: -520000, percentage: "-28.9%", direction: "现金流出" }, { name: "税费", value: -180000, percentage: "-10.0%", direction: "现金流出" }, { name: "工资", value: -220000, percentage: "-12.2%", direction: "现金流出" }, { name: "运费", value: -120000, percentage: "-6.7%", direction: "现金流出" }, { name: "其他", value: -40000, percentage: "-2.2%", direction: "现金流出" }, { name: "经营性现金流", value: 620000, percentage: "34.4%", direction: "净现金流" }, { name: "期末现金", value: 2420000, percentage: null, direction: "期初/期末" } ];
+
+                if (activeTab === 'domestic') {
+                    renderWaterfall(domesticDetails, chart);
+                } else if (activeTab === 'overseas') {
+                    renderWaterfall(overseasDetails, chart);
+                } else {
+                    const comparisonLabels = ["销售回款", "采购付款", "税费", "工资", "运费", "其他", "经营性现金流"];
+                    const domesticVals = [1850000, -850000, -320000, -280000, -150000, -50000, 850000];
+                    const overseasVals = [1350000, -520000, -180000, -220000, -120000, -40000, 620000];
+                    const option = {
+                        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                        legend: { data: ['国内业务', '海外业务'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} },
+                        grid: { left: '8%', right: '5%', top: '20%', bottom: '10%' },
+                        xAxis: { type: 'category', data: comparisonLabels, axisLabel: { fontSize: 10, rotate: 15 } },
+                        yAxis: { type: 'value', name: '金额（元）', nameTextStyle: {color: colors.geelyBlue}, axisLabel: { formatter: v => formatCurrency(v) } },
+                        series: [
+                            { name: '国内业务', type: 'bar', data: domesticVals, itemStyle: { color: colors.geelyBlue } },
+                            { name: '海外业务', type: 'bar', data: overseasVals, itemStyle: { color: colors.module3 } }
+                        ]
+                    };
+                    chart.setOption(option);
+                }
+            }
+            chart.on('click', function(params) { alert('模拟下钻：查看明细'); });
+        }
+
+        function renderWaterfall(data, chart) {
+            const values = data.map(d => d.value);
+            const labels = data.map(d => d.name);
+            const colorsArray = values.map((v,i) => {
+                if (i===0 || i===values.length-1) return colors.geelyDark;
+                return v>0 ? colors.geelyBlue : colors.danger;
+            });
+            const option = {
+                tooltip: { trigger: 'item', formatter: params => {
+                    const idx = params.dataIndex;
+                    const item = data[idx];
+                    return `${item.name}<br/>金额：${formatCurrency(item.value)}<br/>占比：${item.percentage || '-'}<br/>方向：${item.direction}`;
+                } },
+                grid: { left: '10%', right: '5%', top: '15%', bottom: '10%' },
+                xAxis: { type: 'category', data: labels, axisLabel: { rotate: 30, fontSize: 9 } },
+                yAxis: { type: 'value', name: '金额（元）', nameTextStyle: {color: colors.geelyBlue}, axisLabel: { formatter: v => formatCurrency(v) } },
+                series: [{
+                    type: 'bar', data: values, itemStyle: { color: params => colorsArray[params.dataIndex] },
+                    label: { show: true, position: 'top', formatter: p => formatCurrency(p.value), fontSize: 9 }
+                }]
+            };
+            chart.setOption(option);
+        }
+
+        // ---- 板块五：出口回款与外汇敞口 (气泡图已修复) ----
+        function initChart5() {
+            const chart = echarts.init(document.getElementById('chart5'));
+            const selectVal = document.getElementById('indicatorSelect5').value;
+            const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+            if (selectVal === 'shipment') {
+                // 确保回款金额各月均低于发车，且数据不同
+                const shipment = [3200000, 2800000, 3500000, 4100000, 3800000, 4500000, 5000000, 4800000, 5200000, 5100000, 4900000, 5300000];
+                // 生成回款 = 发车 * (0.7~0.95) 随机
+                const payment = shipment.map(val => Math.round(val * (0.7 + Math.random() * 0.25)));
+                const exposure = shipment.map((v,i) => v - payment[i]);
+                const option = {
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { data: ['出口发车金额', '出口回款金额', '未回款敞口'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} },
+                    grid: { left: '8%', right: '8%', top: '22%', bottom: '10%' },
+                    xAxis: { type: 'category', data: months, axisLabel: { fontSize: 9 } },
+                    yAxis: [
+                        { type: 'value', name: '金额(元)', nameTextStyle: {color: colors.geelyBlue}, axisLabel: { formatter: v => formatCurrency(v) } },
+                        { type: 'value', name: '敞口(元)', nameTextStyle: {color: colors.geelyLightBlue}, axisLabel: { formatter: v => formatCurrency(v) } }
+                    ],
+                    series: [
+                        { name: '出口发车金额', type: 'bar', data: shipment, barWidth: '30%', itemStyle: { color: colors.geelyBlue } },
+                        { name: '出口回款金额', type: 'bar', data: payment, barWidth: '30%', itemStyle: { color: colors.success } },
+                        { name: '未回款敞口', type: 'line', data: exposure, yAxisIndex: 1, smooth: true, lineStyle: { color: colors.danger, width: 3 }, symbol: 'diamond' }
+                    ]
+                };
+                chart.setOption(option);
+            } else if (selectVal === 'timeliness') {
+                const timelyRate = [82.5,85.3,86.8,84.2,87.6,88.9,90.1,91.5,95.2,92.8,91.4,89.7];
+                const dso = [72,68,65,70,66,64,62,59,52,58,61,63];
+                const option = {
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                    legend: { data: ['回款及时率(%)', 'DSO(天)'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} },
+                    grid: { left: '8%', right: '8%', top: '22%', bottom: '10%' },
+                    xAxis: { type: 'category', data: months, axisLabel: { fontSize: 9 } },
+                    yAxis: [
+                        { type: 'value', name: '及时率(%)', min: 70, max: 100, nameTextStyle: {color: colors.geelyBlue}, axisLabel: { formatter: '{value}%' } },
+                        { type: 'value', name: 'DSO(天)', min: 40, max: 80, inverse: true, nameTextStyle: {color: colors.geelyLightBlue}, axisLabel: { formatter: '{value}天' } }
+                    ],
+                    series: [
+                        { name: '回款及时率(%)', type: 'line', data: timelyRate, lineStyle: { color: colors.geelyBlue, width: 3 }, symbol: 'circle' },
+                        { name: '目标线', type: 'line', data: Array(months.length).fill(90), lineStyle: { type: 'dashed', color: colors.success, width: 2 }, symbol: 'none' },
+                        { name: 'DSO(天)', type: 'line', data: dso, yAxisIndex: 1, lineStyle: { color: colors.danger, width: 3 }, symbol: 'diamond' },
+                        { name: 'DSO目标', type: 'line', data: Array(months.length).fill(60), yAxisIndex: 1, lineStyle: { type: 'dashed', color: colors.warning, width: 2 }, symbol: 'none' }
+                    ]
+                };
+                chart.setOption(option);
+            } else if (selectVal === 'fxBubble') {
+                // ========== 修复气泡图：确保数据格式正确且分布合理 ==========
+                const currencyBase = [
+                    { currency: "USD", region: "北美", baseColor: colors.geelyBlue },
+                    { currency: "EUR", region: "欧洲", baseColor: colors.module4 },
+                    { currency: "GBP", region: "欧洲", baseColor: colors.module4 },
+                    { currency: "JPY", region: "亚洲", baseColor: colors.success },
+                    { currency: "AUD", region: "大洋洲", baseColor: colors.danger },
+                    { currency: "CAD", region: "北美", baseColor: colors.geelyBlue },
+                    { currency: "CHF", region: "欧洲", baseColor: colors.module4 },
+                    { currency: "SGD", region: "亚洲", baseColor: colors.success },
+                    { currency: "HKD", region: "亚洲", baseColor: colors.success },
+                    { currency: "KRW", region: "亚洲", baseColor: colors.success }
+                ];
+                
+                // 生成随机数据，确保范围合理：波动率0.5~7.5，净敞口-5M~15M，应收2M~17M
+                const data = currencyBase.map(c => {
+                    const volatility = 0.5 + Math.random() * 7; // 0.5~7.5
+                    const netExposure = (Math.random() * 20 - 5) * 1000000; // -5M ~ 15M
+                    const receivable = (2 + Math.random() * 15) * 1000000; // 2M ~ 17M
+                    // 风险等级根据波动率简单划分
+                    const risk = volatility > 5 ? '高' : (volatility > 3 ? '中等' : '低');
+                    
+                    return {
+                        name: c.currency,
+                        value: [volatility, netExposure, receivable], // 必须为数组
+                        symbolSize: 8 + (receivable / 1000000) * 1.2, // 大小与应收成正比
+                        itemStyle: { color: c.baseColor },
+                        // 附加信息用于tooltip
+                        region: c.region,
+                        risk: risk,
+                        receivable: receivable,
+                        netExposure: netExposure,
+                        volatility: volatility.toFixed(2)
+                    };
+                });
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: params => {
+                            const d = params.data;
+                            return `${d.name}<br/>波动率: ${d.value[0].toFixed(2)}%<br/>净敞口: ${formatCurrency(d.value[1])}<br/>应收余额: ${formatCurrency(d.value[2])}<br/>区域: ${d.region}<br/>风险: ${d.risk}`;
+                        }
+                    },
+                    grid: { left: '10%', right: '10%', top: '15%', bottom: '15%' },
+                    xAxis: {
+                        type: 'value',
+                        name: '汇率波动幅度 (%)',
+                        nameTextStyle: { color: colors.geelyBlue },
+                        min: 0,
+                        max: 8
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '净敞口金额 (元)',
+                        nameTextStyle: { color: colors.geelyBlue },
+                        axisLabel: { formatter: v => formatCurrency(v) },
+                        // 自动适应数据范围，不设min/max以便显示所有点
+                    },
+                    series: [{
+                        type: 'scatter',
+                        data: data,
+                        symbolSize: d => d.symbolSize,
+                        markLine: {
+                            data: [{ yAxis: 0 }],
+                            lineStyle: { color: colors.danger, type: 'dashed', width: 1.5 },
+                            label: { show: false }
+                        },
+                        emphasis: { focus: 'series' }
+                    }]
+                };
+                chart.setOption(option);
+            } else if (selectVal === 'fxStack') {
+                const countries = ['美国', '德国', '日本', '韩国', '墨西哥', '英国', '澳大利亚'];
+                const aging0_30 = [3200000, 2800000, 2100000, 1900000, 1200000, 2200000, 800000];
+                const aging31_60 = [1500000, 1200000, 900000, 1100000, 700000, 900000, 400000];
+                const aging61_90 = [800000, 600000, 500000, 400000, 300000, 500000, 200000];
+                const aging90plus = [600000, 400000, 300000, 250000, 150000, 350000, 100000];
+                const total = aging0_30.map((_,i) => aging0_30[i]+aging31_60[i]+aging61_90[i]+aging90plus[i]);
+                const ratio90 = aging90plus.map((v,i) => (v/total[i]*100).toFixed(1));
+                
+                const option = {
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { data: ['0-30天', '31-60天', '61-90天', '90+天'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} },
+                    grid: { left: '8%', right: '10%', top: '25%', bottom: '10%' },
+                    xAxis: { type: 'category', data: countries, axisLabel: { fontSize: 9, rotate: 15 } },
+                    yAxis: [
+                        { type: 'value', name: '应收余额(元)', nameTextStyle: {color: colors.geelyBlue}, axisLabel: { formatter: v => formatCurrency(v) } },
+                        { type: 'value', name: '90+占比 %', min: 0, max: 30, nameTextStyle: {color: colors.danger}, axisLabel: { formatter: '{value}%' } }
+                    ],
+                    series: [
+                        { name: '0-30天', type: 'bar', stack: 'total', data: aging0_30, itemStyle: { color: colors.agingColors[0] } },
+                        { name: '31-60天', type: 'bar', stack: 'total', data: aging31_60, itemStyle: { color: colors.agingColors[1] } },
+                        { name: '61-90天', type: 'bar', stack: 'total', data: aging61_90, itemStyle: { color: colors.agingColors[2] } },
+                        { name: '90+天', type: 'bar', stack: 'total', data: aging90plus, itemStyle: { color: colors.agingColors[3] } },
+                        { name: '90+占比 %', type: 'line', yAxisIndex: 1, data: ratio90, smooth: true, lineStyle: { color: colors.danger, width: 3 }, symbol: 'circle', label: { show: true, formatter: '{c}%', fontSize: 9 } }
+                    ]
+                };
+                chart.setOption(option);
+            }
+            // 移除所有点击弹窗，仅保留图表交互
+        }
+
+        // ---- 板块六：国内侧 · 发车收款敞口 (不变) ----
+        function initChart6() {
+            const chart = echarts.init(document.getElementById('chart6'));
+            const selectVal = document.getElementById('indicatorSelect6').value;
+            const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+            if (selectVal === 'vehicle') {
+                const departure = [320,280,350,410,380,450,500,480,520,510,490,530];
+                const payment = [300,250,320,380,350,420,470,460,480,490,470,500];
+                const gap = departure.map((v,i) => v - payment[i]);
+                const option = { tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } }, legend: { data: ['发车数量(辆)', '收款对应数量(辆)', '敞口数量(辆)'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} }, grid: { left: '8%', right: '8%', top: '22%', bottom: '10%' }, xAxis: { type: 'category', data: months, axisLabel: { fontSize: 9 } }, yAxis: [ { type: 'value', name: '数量(辆)', nameTextStyle: {color: colors.geelyBlue} }, { type: 'value', name: '敞口(辆)', nameTextStyle: {color: colors.geelyLightBlue} } ], series: [ { name: '发车数量(辆)', type: 'bar', data: departure, barWidth: '30%', itemStyle: { color: colors.geelyBlue } }, { name: '收款对应数量(辆)', type: 'bar', data: payment, barWidth: '30%', itemStyle: { color: colors.success } }, { name: '敞口数量(辆)', type: 'line', data: gap, yAxisIndex: 1, smooth: true, lineStyle: { color: colors.danger, width: 3 }, symbol: 'diamond' } ] };
+                chart.setOption(option);
+            } else if (selectVal === 'coverage') {
+                const receivable = [3450000,3120000,3760000,3890000,4020000,4210000,3980000,3780000,3650000,3450000,3320000,3280000];
+                const coverage = [75.2,72.8,78.5,76.3,79.1,77.6,81.2,82.5,80.8,78.4,79.6,80.3];
+                const option = { tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } }, legend: { data: ['应收余额(元)', '回款覆盖率(%)'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} }, grid: { left: '8%', right: '8%', top: '22%', bottom: '10%' }, xAxis: { type: 'category', data: months, axisLabel: { fontSize: 9 } }, yAxis: [ { type: 'value', name: '应收余额(元)', nameTextStyle: {color: colors.geelyBlue}, axisLabel: { formatter: v => formatCurrency(v) } }, { type: 'value', name: '覆盖率(%)', min: 60, max: 100, nameTextStyle: {color: colors.geelyLightBlue}, axisLabel: { formatter: '{value}%' } } ], series: [ { name: '应收余额(元)', type: 'bar', data: receivable, barWidth: '30%', itemStyle: { color: colors.geelyBlue } }, { name: '回款覆盖率(%)', type: 'line', data: coverage, yAxisIndex: 1, smooth: true, lineStyle: { color: colors.success, width: 3 }, symbol: 'circle' }, { name: '目标线', type: 'line', data: Array(months.length).fill(80), yAxisIndex: 1, lineStyle: { type: 'dashed', color: colors.danger, width: 2 }, symbol: 'none' } ] };
+                chart.setOption(option);
+            } else if (selectVal === 'customerAging') {
+                const customers = ['经销商A', '经销商B', '经销商C', '经销商D', '经销商E', '经销商F', '经销商G', '经销商H'];
+                const aging0_30 = [4200000, 3800000, 3500000, 2900000, 2600000, 2100000, 1800000, 1200000];
+                const aging31_60 = [2100000, 1900000, 1600000, 1400000, 1300000, 1100000, 900000, 700000];
+                const aging61_90 = [1100000, 900000, 800000, 600000, 550000, 450000, 300000, 200000];
+                const aging90plus = [800000, 600000, 500000, 400000, 350000, 300000, 200000, 150000];
+                const total = aging0_30.map((_,i) => aging0_30[i]+aging31_60[i]+aging61_90[i]+aging90plus[i]);
+                const overdueRate = aging90plus.map((v,i) => (v/total[i]*100).toFixed(1));
+                
+                const option = {
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { data: ['0-30天', '31-60天', '61-90天', '90+天'], top: 5, left: 'center', textStyle: {color: colors.geelyBlue} },
+                    grid: { left: '10%', right: '10%', top: '25%', bottom: '10%' },
+                    xAxis: { type: 'category', data: customers, axisLabel: { fontSize: 9, rotate: 15 } },
+                    yAxis: [
+                        { type: 'value', name: '应收余额(元)', nameTextStyle: {color: colors.geelyBlue}, axisLabel: { formatter: v => formatCurrency(v) } },
+                        { type: 'value', name: '逾期率 %', min: 0, max: 25, nameTextStyle: {color: colors.danger}, axisLabel: { formatter: '{value}%' } }
+                    ],
+                    series: [
+                        { name: '0-30天', type: 'bar', stack: 'total', data: aging0_30, itemStyle: { color: colors.agingColors[0] } },
+                        { name: '31-60天', type: 'bar', stack: 'total', data: aging31_60, itemStyle: { color: colors.agingColors[1] } },
+                        { name: '61-90天', type: 'bar', stack: 'total', data: aging61_90, itemStyle: { color: colors.agingColors[2] } },
+                        { name: '90+天', type: 'bar', stack: 'total', data: aging90plus, itemStyle: { color: colors.agingColors[3] } },
+                        { name: '逾期率 %', type: 'line', yAxisIndex: 1, data: overdueRate, smooth: true, lineStyle: { color: colors.danger, width: 3 }, symbol: 'circle', label: { show: true, formatter: '{c}%', fontSize: 9 } }
+                    ]
+                };
+                chart.setOption(option);
+            }
+            chart.on('click', function(params) { alert('点击下钻：查看客户明细或账龄详情'); });
+        }
+
+        window.addEventListener('DOMContentLoaded', initAllCharts);
+    </script>
+</body>
+</html>
